@@ -1,0 +1,4 @@
+ 1949  git commit -m "first commit"
+ 1950  git remote add origin https://github.com/shangwei3/pdf.git
+ 1951  git push -u origin master
+
