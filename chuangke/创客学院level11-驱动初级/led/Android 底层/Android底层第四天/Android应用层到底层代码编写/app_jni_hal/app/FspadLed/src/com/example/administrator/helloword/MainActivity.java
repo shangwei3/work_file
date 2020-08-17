@@ -1,0 +1,51 @@
+package com.example.administrator.helloword;
+import android.os.IBinder;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.os.IFarsightLedService;
+import android.os.ServiceManager;
+import android.app.Activity;  
+import android.util.Log;
+import android.os.RemoteException;
+import com.example.administrator.helloword.R;
+
+public class MainActivity extends Activity {
+    private boolean flag = false;
+	private Button   getValueButton = null;
+    private EditText showResultText = null;
+    private IFarsightLedService farsightLedService = null;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        farsightLedService = IFarsightLedService.Stub.asInterface(ServiceManager.getService("fspad733-led"));
+        showResultText = (EditText)findViewById(R.id.edit_value);
+        getValueButton = (Button)findViewById(R.id.button);
+        getValueButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String resultText = null;
+				try{  
+					int result ;
+					if(!flag){
+						resultText = "farsight led on";
+						farsightLedService.farsightLedOn();
+						
+						flag = true;
+					}else{
+						resultText = "farsight led off";
+						farsightLedService.farsightLedOff();
+						flag = false;
+					}
+                	showResultText.setText(resultText);
+			  }catch (RemoteException e) {  
+						Log.e("FarsightLed", "Remote Exception while reading value from device.");  
+					}     
+            }
+        });
+    }
+}

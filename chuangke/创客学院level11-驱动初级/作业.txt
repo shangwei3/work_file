@@ -1,0 +1,63 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+-------------------------PWM BEEP 裸机驱动---------------------------------------------------------
+
+void init_beep_gpio()
+{
+	SET_GPIO_MODE(GPD0.CON,0,0x2);
+	return ;
+}
+
+void init_pwm_PWM(int tcnt,int tcmp)
+{
+	//一级分频:PCLK/(199 + 1) = 100MHZ/200 = 5000000
+	PWM.TCFG0 = 199;
+
+	//二级分频:5000000 / 2 = 2500000HZ
+	PWM.TCFG1 &= ~(0xf << 0);
+	PWM.TCFG1 |= (0x1 << 0);
+
+	//写值
+	PWM.TCNTB0 = tcnt;
+	PWM.TCMPB0 = tcmp;
+
+	//手动加载
+	PWM.TCON |= (1 << 1);
+
+	//清除手动记载
+	PWM.TCON &= ~(1 << 1);
+
+	return ;
+}
+
+void start_pwm_PWM()
+{
+	//启动定时器&&自动重载
+	PWM.TCON |= (1 << 0) | (1 << 3);
+}
+
+void stop_pwm_PWM()
+{
+	//停止定时器
+	PWM.TCON &= ~(1 << 0);
+}
+
+int test_pwm_PWM()
+{
+	init_beep_gpio();
+	init_pwm_PWM(1000,900);
+	start_pwm_PWM();
+
+	return 0;
+}

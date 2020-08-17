@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">helloword</string>
+    <string name="hello_word">Hello Word</string>
+    <string name="btn_text">Get Val</string>
+</resources>
