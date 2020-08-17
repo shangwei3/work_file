@@ -1,0 +1,2 @@
+/mnt/hgfs/ubuntu-share/learn-driver/platform/led/led_version2/led_device1/led-other.ko
+/mnt/hgfs/ubuntu-share/learn-driver/platform/led/led_version2/led_device1/led-other.o
