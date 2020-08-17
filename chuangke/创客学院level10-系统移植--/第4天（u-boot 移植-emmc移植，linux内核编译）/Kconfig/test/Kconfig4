@@ -1,0 +1,11 @@
+config HELLO
+	tristate  
+	prompt "support Hello"
+	default n 
+	select HELLO1 
+	help
+		"Test select Hello1"
+
+config HELLO1 
+	tristate 
+	prompt "support Hello1"

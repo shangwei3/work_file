@@ -1,0 +1,46 @@
+config HELLOx 
+	tristate 
+	prompt "Hellox support"
+	help 
+		"Compile hello.c"
+
+config HELLOy 
+	tristate 
+	prompt "Helloy support"
+	help 
+		"Compile hello.c"
+
+config HELLO1
+	tristate 
+	prompt "Hello1 support"
+	depends on HELLOx
+	help 
+		"Show Hello1,must Hellox Y"
+
+#[y] :2 , [m] : 1, [n] : 0
+config HELLO2
+	tristate 
+	prompt "Hello2 support"
+
+#HELLOx && HELLOy ->min value
+#0 : HELLO2 no see
+#1 : HELLO2 see,but only M/N
+#2 : HELLO3 see,but ony M/Y/N
+#------------------------------------------
+	depends on HELLOx&&HELLOy
+	help 
+		"Show Hello2,must Hellox  Y and Helloy Y"
+
+		
+config HELLO3
+	tristate 
+	prompt "Hello3 support"
+
+#HELLOx || HELLOy ->max value
+#0 : HELLO2 no see
+#1 : HELLO2 see,but only M/N
+#2 : HELLO3 see,but ony M/Y/N
+#------------------------------------------
+	depends on HELLOx||HELLOy
+	help 
+		"Show Hello3,must Hellox  Y or Helloy Y"
