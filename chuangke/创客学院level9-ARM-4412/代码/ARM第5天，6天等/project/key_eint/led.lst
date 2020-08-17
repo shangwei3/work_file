@@ -1,0 +1,84 @@
+ARM GAS  led.s 			page 1
+
+
+   1              	.global _start
+   2              	
+   3              	_start:
+   4 0000 0D0000EA 		b reset
+   5 0004 14F09FE5 		ldr pc,_undefined_instruction
+   6 0008 14F09FE5 		ldr pc,_software_interrupt
+   7 000c 14F09FE5 		ldr pc,_prefetch_abort
+   8 0010 14F09FE5 		ldr pc,_data_abort
+   9 0014 14F09FE5 		ldr pc,_not_used
+  10 0018 14F09FE5 		ldr pc,_irq
+  11 001c 14F09FE5 		ldr pc,_fiq
+  12              	_undefined_instruction:
+  13 0020 20000000 		.word _undefined_instruction
+  14              	_software_interrupt:
+  15 0024 24000000 		.word _software_interrupt
+  16              	_prefetch_abort:
+  17 0028 28000000 		.word _prefetch_abort
+  18              	_data_abort:
+  19 002c 2C000000 		.word _data_abort
+  20              	_not_used:
+  21 0030 30000000 		.word _not_used
+  22              	_irq:
+  23 0034 5C000000 		.word irq_handler
+  24              	_fiq:
+  25 0038 38000000 		.word _fiq
+  26              	
+  27              		reset:
+  28              	 
+  29 003c 2C009FE5 		ldr r0,=_start
+  30 0040 100F0CEE 		mcr p15,0,r0,c12,c0,0
+  31              	
+  32              	   
+  33 0044 00000FE1 		mrs r0,cpsr
+  34 0048 0110A0E3 		mov r1,#1
+  35 004c 8103C0E1 		bic r0,r0,r1,lsl#7
+  36 0050 00F029E1 		msr cpsr,r0
+  37              	
+  38              	    
+  39 0054 18D09FE5 		ldr sp,=0x02060000
+  40 0058 FEFFFFEB 		bl main   
+  41              	irq_handler:
+  42 005c 14D09FE5 		ldr sp,=0x02059000 
+  43 0060 FF5F2DE9 		stmfd sp!,{r0-r12,lr} 
+  44              	
+  45 0064 FEFFFFEB 		bl do_irq   
+  46              	
+  47              	 
+  48 0068 FF9FFDE8 		ldmfd sp!,{r0-r12,pc}^ 
+  49              		  
+  50              	stop:
+  51 006c FEFFFFEA 		b stop
+  51      00000000 
+  51      00000602 
+  51      00900502 
+ARM GAS  led.s 			page 2
+
+
+DEFINED SYMBOLS
+                            *ABS*:000001ce __GCC_VERSION
+                            *ABS*:00000001 __GCC
+                            *ABS*:00000208 __UVISION_VERSION
+               led.s:3      .text:00000000 _start
+               led.s:27     .text:0000003c reset
+               led.s:4      .text:00000000 $a
+               led.s:12     .text:00000020 _undefined_instruction
+               led.s:14     .text:00000024 _software_interrupt
+               led.s:16     .text:00000028 _prefetch_abort
+               led.s:18     .text:0000002c _data_abort
+               led.s:20     .text:00000030 _not_used
+               led.s:22     .text:00000034 _irq
+               led.s:24     .text:00000038 _fiq
+               led.s:13     .text:00000020 $d
+               led.s:41     .text:0000005c irq_handler
+               led.s:29     .text:0000003c $a
+               led.s:50     .text:0000006c stop
+               led.s:51     .text:00000070 $d
+                   .debug_aranges:0000000c $d
+
+UNDEFINED SYMBOLS
+main
+do_irq

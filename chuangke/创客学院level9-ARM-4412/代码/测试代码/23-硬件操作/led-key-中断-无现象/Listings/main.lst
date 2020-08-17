@@ -1,0 +1,1324 @@
+ARM GAS  C:\Users\ADMINI~1.MIC\AppData\Local\Temp\ccHYrmEr.s 			page 1
+
+
+   1              		.cpu arm7tdmi
+   2              		.fpu softvfp
+   3              		.eabi_attribute 20, 1
+   4              		.eabi_attribute 21, 1
+   5              		.eabi_attribute 23, 3
+   6              		.eabi_attribute 24, 1
+   7              		.eabi_attribute 25, 1
+   8              		.eabi_attribute 26, 1
+   9              		.eabi_attribute 30, 1
+  10              		.eabi_attribute 18, 4
+  11              		.file	"main.c"
+  12              		.text
+  13              	.Ltext0:
+  14              		.cfi_sections	.debug_frame
+  15              		.align	2
+  16              		.global	led_init
+  17              		.type	led_init, %function
+  18              	led_init:
+  19              	.LFB0:
+  20              		.file 1 "main.c"
+   1:main.c        **** //GPIO --led
+   2:main.c        **** #define GPX2CON  0x11000C40
+   3:main.c        **** #define GPX2DAT  0x11000C44
+   4:main.c        **** //GPIO --key2
+   5:main.c        **** #define GPX1CON  0x11000C20
+   6:main.c        **** #define GPX1DAT  0x11000C24
+   7:main.c        **** #define  GPX1PUD  0x11000c28
+   8:main.c        **** 
+   9:main.c        **** 
+  10:main.c        **** //GPIO--interrupt
+  11:main.c        **** #define EXT_INT41_CON 0x11000E04
+  12:main.c        **** #define EXT_INT41_MASK 0x11000F04
+  13:main.c        **** #define EXT_INT41_PEND 0x11000F44
+  14:main.c        **** 
+  15:main.c        **** //GIC 
+  16:main.c        **** #define ICDISER1_CPU  0x10490104
+  17:main.c        **** #define ICDDCR        0x10490000
+  18:main.c        **** 
+  19:main.c        **** #define ICDIPTR14     0x10490838
+  20:main.c        **** #define ICCPMR_CPU0   0x10480004
+  21:main.c        **** 
+  22:main.c        **** #define ICCICR_CPU0   0x10480000
+  23:main.c        **** #define ICDISR1_CPU0  0x10490084
+  24:main.c        **** 
+  25:main.c        **** #define ICDICPR1_CPU0 0x10490284
+  26:main.c        **** #define ICCEOIR       0x10480010
+  27:main.c        **** 
+  28:main.c        **** #define REG_READ(addr)        (*(volatile unsigned int*)(addr))
+  29:main.c        **** #define REG_WRITE(addr,val)   ((*(volatile unsigned int*)(addr)) = (val)) 
+  30:main.c        **** 	
+  31:main.c        **** #define ICCIAR_CPU0  0x1048000c
+  32:main.c        **** 	
+  33:main.c        **** //1.设置寄存器
+  34:main.c        **** //2.做读写操作
+  35:main.c        **** //一般操作:
+  36:main.c        **** //[1].硬件初始化
+  37:main.c        **** //[2].硬件的操作(读/写)
+ARM GAS  C:\Users\ADMINI~1.MIC\AppData\Local\Temp\ccHYrmEr.s 			page 2
+
+
+  38:main.c        **** //[3].退出操作(操作系统的)
+  39:main.c        **** 
+  40:main.c        **** void led_init() //初始化 --- 初始化为需要的状态
+  41:main.c        **** {
+  21              		.loc 1 41 0
+  22              		.cfi_startproc
+  23              		@ Function supports interworking.
+  24              		@ args = 0, pretend = 0, frame = 0
+  25              		@ frame_needed = 0, uses_anonymous_args = 0
+  26              		@ link register save eliminated.
+  42:main.c        **** 	//配置GPX2CON[31:28] = 0x1;
+  43:main.c        **** 	int temp = REG_READ( GPX2CON); //(1).读
+  27              		.loc 1 43 0
+  28 0000 1134A0E3 		mov	r3, #285212672
+  29 0004 402C93E5 		ldr	r2, [r3, #3136]
+  30              	.LVL0:
+  44:main.c        **** 	temp &= ~(0xf<<28);  //(2).修改
+  31              		.loc 1 44 0
+  32 0008 0F22C2E3 		bic	r2, r2, #-268435456
+  33              	.LVL1:
+  45:main.c        **** 	temp |= 0x1<<28;
+  34              		.loc 1 45 0
+  35 000c 012282E3 		orr	r2, r2, #268435456
+  36              	.LVL2:
+  46:main.c        **** 	REG_WRITE(GPX2CON,temp);//(3).写
+  37              		.loc 1 46 0
+  38 0010 402C83E5 		str	r2, [r3, #3136]
+  47:main.c        **** }	
+  39              		.loc 1 47 0
+  40 0014 1EFF2FE1 		bx	lr
+  41              		.cfi_endproc
+  42              	.LFE0:
+  43              		.size	led_init, .-led_init
+  44              		.align	2
+  45              		.global	led_on
+  46              		.type	led_on, %function
+  47              	led_on:
+  48              	.LFB1:
+  48:main.c        **** void led_on()
+  49:main.c        **** {
+  49              		.loc 1 49 0
+  50              		.cfi_startproc
+  51              		@ Function supports interworking.
+  52              		@ args = 0, pretend = 0, frame = 0
+  53              		@ frame_needed = 0, uses_anonymous_args = 0
+  54              		@ link register save eliminated.
+  50:main.c        **** 		 //在GPX2DAT[7]	= 1;
+  51:main.c        **** 	int temp = REG_READ( GPX2DAT); //(1).读
+  55              		.loc 1 51 0
+  56 0018 1134A0E3 		mov	r3, #285212672
+  57 001c 442C93E5 		ldr	r2, [r3, #3140]
+  58              	.LVL3:
+  52:main.c        **** 	temp &= ~(0x1<<7);  //(2).修改
+  53:main.c        **** 	temp |= 0x1<<7;
+  59              		.loc 1 53 0
+  60 0020 802082E3 		orr	r2, r2, #128
+  61              	.LVL4:
+ARM GAS  C:\Users\ADMINI~1.MIC\AppData\Local\Temp\ccHYrmEr.s 			page 3
+
+
+  54:main.c        **** 	REG_WRITE(GPX2DAT,temp);//(3).写
+  62              		.loc 1 54 0
+  63 0024 442C83E5 		str	r2, [r3, #3140]
+  55:main.c        **** }
+  64              		.loc 1 55 0
+  65 0028 1EFF2FE1 		bx	lr
+  66              		.cfi_endproc
+  67              	.LFE1:
+  68              		.size	led_on, .-led_on
+  69              		.align	2
+  70              		.global	led_off
+  71              		.type	led_off, %function
+  72              	led_off:
+  73              	.LFB2:
+  56:main.c        **** void led_off()
+  57:main.c        **** {	
+  74              		.loc 1 57 0
+  75              		.cfi_startproc
+  76              		@ Function supports interworking.
+  77              		@ args = 0, pretend = 0, frame = 0
+  78              		@ frame_needed = 0, uses_anonymous_args = 0
+  79              		@ link register save eliminated.
+  58:main.c        **** 	//在GPX2DAT[7]	= 0;
+  59:main.c        **** 	int temp = REG_READ( GPX2DAT); //(1).读
+  80              		.loc 1 59 0
+  81 002c 1134A0E3 		mov	r3, #285212672
+  82 0030 442C93E5 		ldr	r2, [r3, #3140]
+  83              	.LVL5:
+  60:main.c        **** 	temp &= ~(0x1<<7);  //(2).修改
+  84              		.loc 1 60 0
+  85 0034 8020C2E3 		bic	r2, r2, #128
+  86              	.LVL6:
+  61:main.c        **** 	REG_WRITE(GPX2DAT,temp);//(3).写
+  87              		.loc 1 61 0
+  88 0038 442C83E5 		str	r2, [r3, #3140]
+  62:main.c        **** }	
+  89              		.loc 1 62 0
+  90 003c 1EFF2FE1 		bx	lr
+  91              		.cfi_endproc
+  92              	.LFE2:
+  93              		.size	led_off, .-led_off
+  94              		.align	2
+  95              		.global	delays
+  96              		.type	delays, %function
+  97              	delays:
+  98              	.LFB3:
+  63:main.c        **** 
+  64:main.c        **** 
+  65:main.c        **** void delays()
+  66:main.c        **** {
+  99              		.loc 1 66 0
+ 100              		.cfi_startproc
+ 101              		@ Function supports interworking.
+ 102              		@ args = 0, pretend = 0, frame = 0
+ 103              		@ frame_needed = 0, uses_anonymous_args = 0
+ 104              		@ link register save eliminated.
+ 105              	.LVL7:
+ARM GAS  C:\Users\ADMINI~1.MIC\AppData\Local\Temp\ccHYrmEr.s 			page 4
+
+
+  67:main.c        **** 	 int i = 1000000;
+  68:main.c        **** 	 while(i--);
+ 106              		.loc 1 68 0
+ 107 0040 08309FE5 		ldr	r3, .L7
+ 108              	.LVL8:
+ 109              	.L5:
+ 110              		.loc 1 68 0 is_stmt 0 discriminator 1
+ 111 0044 013053E2 		subs	r3, r3, #1
+ 112 0048 FDFFFF1A 		bne	.L5
+  69:main.c        **** }
+ 113              		.loc 1 69 0 is_stmt 1
+ 114 004c 1EFF2FE1 		bx	lr
+ 115              	.L8:
+ 116              		.align	2
+ 117              	.L7:
+ 118 0050 41420F00 		.word	1000001
+ 119              		.cfi_endproc
+ 120              	.LFE3:
+ 121              		.size	delays, .-delays
+ 122              		.align	2
+ 123              		.global	key_init
+ 124              		.type	key_init, %function
+ 125              	key_init:
+ 126              	.LFB4:
+  70:main.c        **** 
+  71:main.c        **** 
+  72:main.c        **** //1.硬件初始化
+  73:main.c        **** void key_init()
+  74:main.c        **** {
+ 127              		.loc 1 74 0
+ 128              		.cfi_startproc
+ 129              		@ Function supports interworking.
+ 130              		@ args = 0, pretend = 0, frame = 0
+ 131              		@ frame_needed = 0, uses_anonymous_args = 0
+ 132              		@ link register save eliminated.
+  75:main.c        **** 	 	//配置GPX1CON[7:4] = 0x0;
+  76:main.c        **** 	int temp = REG_READ(GPX1CON); //(1).读
+ 133              		.loc 1 76 0
+ 134 0054 1134A0E3 		mov	r3, #285212672
+ 135 0058 202C93E5 		ldr	r2, [r3, #3104]
+ 136              	.LVL9:
+  77:main.c        **** 	temp &= ~(0xf<<4);  //(2).修改
+ 137              		.loc 1 77 0
+ 138 005c F020C2E3 		bic	r2, r2, #240
+ 139              	.LVL10:
+  78:main.c        **** 	temp |= 0x0<<4;
+  79:main.c        **** 	REG_WRITE(GPX1CON,temp);//(3).写
+ 140              		.loc 1 79 0
+ 141 0060 202C83E5 		str	r2, [r3, #3104]
+  80:main.c        **** }
+ 142              		.loc 1 80 0
+ 143 0064 1EFF2FE1 		bx	lr
+ 144              		.cfi_endproc
+ 145              	.LFE4:
+ 146              		.size	key_init, .-key_init
+ 147              		.align	2
+ 148              		.global	get_key_state
+ARM GAS  C:\Users\ADMINI~1.MIC\AppData\Local\Temp\ccHYrmEr.s 			page 5
+
+
+ 149              		.type	get_key_state, %function
+ 150              	get_key_state:
+ 151              	.LFB5:
+  81:main.c        **** 
+  82:main.c        **** //2.硬件操作
+  83:main.c        **** int get_key_state()
+  84:main.c        **** {
+ 152              		.loc 1 84 0
+ 153              		.cfi_startproc
+ 154              		@ Function supports interworking.
+ 155              		@ args = 0, pretend = 0, frame = 0
+ 156              		@ frame_needed = 0, uses_anonymous_args = 0
+ 157              		@ link register save eliminated.
+  85:main.c        ****    int state = REG_READ(GPX1DAT);
+ 158              		.loc 1 85 0
+ 159 0068 1134A0E3 		mov	r3, #285212672
+ 160 006c 240C93E5 		ldr	r0, [r3, #3108]
+ 161              	.LVL11:
+  86:main.c        **** 	
+  87:main.c        **** 	 return state;
+  88:main.c        **** }
+ 162              		.loc 1 88 0
+ 163 0070 1EFF2FE1 		bx	lr
+ 164              		.cfi_endproc
+ 165              	.LFE5:
+ 166              		.size	get_key_state, .-get_key_state
+ 167              		.align	2
+ 168              		.global	interrup_init
+ 169              		.type	interrup_init, %function
+ 170              	interrup_init:
+ 171              	.LFB6:
+  89:main.c        **** 
+  90:main.c        **** 
+  91:main.c        **** 
+  92:main.c        **** //1.中断初始化
+  93:main.c        **** void interrup_init()
+  94:main.c        **** {
+ 172              		.loc 1 94 0
+ 173              		.cfi_startproc
+ 174              		@ Function supports interworking.
+ 175              		@ args = 0, pretend = 0, frame = 0
+ 176              		@ frame_needed = 0, uses_anonymous_args = 0
+ 177              		@ link register save eliminated.
+  95:main.c        **** 	   //(1). muxed  ---选择为中断功能
+  96:main.c        ****      //GPX1CON[4:7] = 0b1111 //0xF = WAKEUP_INT1[7] 0x1100_0C20 
+  97:main.c        **** 	   REG_WRITE(GPX1CON,REG_READ(GPX1CON)|(0xf<<4));	
+ 178              		.loc 1 97 0
+ 179 0074 1134A0E3 		mov	r3, #285212672
+ 180 0078 202C93E5 		ldr	r2, [r3, #3104]
+ 181 007c F02082E3 		orr	r2, r2, #240
+ 182 0080 202C83E5 		str	r2, [r3, #3104]
+  98:main.c        **** 	   REG_WRITE(GPX1PUD,(REG_READ(GPX1PUD)&(~(0x3<<2)))); 
+ 183              		.loc 1 98 0
+ 184 0084 282C93E5 		ldr	r2, [r3, #3112]
+ 185 0088 0C20C2E3 		bic	r2, r2, #12
+ 186 008c 282C83E5 		str	r2, [r3, #3112]
+  99:main.c        **** 	   //(2).引脚关于中断的配置
+ARM GAS  C:\Users\ADMINI~1.MIC\AppData\Local\Temp\ccHYrmEr.s 			page 6
+
+
+ 100:main.c        **** 	   // falling  ---下降沿 触发中断
+ 101:main.c        ****      //  EXT_INT41_CON[4:6] = 0b010       //  0x1100_0E04 (0x2)
+ 102:main.c        **** 	   REG_WRITE(EXT_INT41_CON,(REG_READ(EXT_INT41_CON)&(~(0x7<<4)))|(0x2<<4));
+ 187              		.loc 1 102 0
+ 188 0090 042E93E5 		ldr	r2, [r3, #3588]
+ 189 0094 7020C2E3 		bic	r2, r2, #112
+ 190 0098 202082E3 		orr	r2, r2, #32
+ 191 009c 042E83E5 		str	r2, [r3, #3588]
+ 103:main.c        **** 	   //(3).使能中断
+ 104:main.c        ****      //EXT_INT41_MASK     = 0x0 ;       //  0x1100_0F04
+ 105:main.c        **** 	   REG_WRITE(EXT_INT41_MASK,REG_READ(EXT_INT41_MASK)&(~(0x1<<1)));
+ 192              		.loc 1 105 0
+ 193 00a0 042F93E5 		ldr	r2, [r3, #3844]
+ 194 00a4 0220C2E3 		bic	r2, r2, #2
+ 195 00a8 042F83E5 		str	r2, [r3, #3844]
+ 106:main.c        **** 	  //(1).enable for distributor      //
+ 107:main.c        **** 	    //ICDISER1_CPU[25] = 0b1         //0x1049_0104
+ 108:main.c        ****       //ICDDCR[0] = 0b1                //0x1049_0000
+ 109:main.c        **** 	  REG_WRITE(ICDISER1_CPU,(REG_READ(ICDISER1_CPU)&(~(0x1<<25))) | (0x1<<25));
+ 196              		.loc 1 109 0
+ 197 00ac B73843E2 		sub	r3, r3, #11993088
+ 198 00b0 042193E5 		ldr	r2, [r3, #260]
+ 199 00b4 022482E3 		orr	r2, r2, #33554432
+ 200 00b8 042183E5 		str	r2, [r3, #260]
+ 110:main.c        **** 	  REG_WRITE(ICDDCR,(REG_READ(ICDDCR)&(~0x1)) | (0x1));
+ 201              		.loc 1 110 0
+ 202 00bc 002093E5 		ldr	r2, [r3, #0]
+ 203 00c0 012082E3 		orr	r2, r2, #1
+ 204 00c4 002083E5 		str	r2, [r3, #0]
+ 111:main.c        **** 	  //(2).target cpu0
+ 112:main.c        ****      //  ICDIPTR14[8:15] = 0b1         //0x1049_0838   
+ 113:main.c        **** 	                                 //(57除4 商 14 余1) --
+ 114:main.c        **** 									                  //一个字节控制一个中断
+ 115:main.c        **** 																		
+ 116:main.c        **** 			REG_WRITE(ICDIPTR14,(REG_READ(ICDIPTR14)&(~(0xff<<8))) | (0x1<<8));
+ 205              		.loc 1 116 0
+ 206 00c8 382893E5 		ldr	r2, [r3, #2104]
+ 207 00cc FF2CC2E3 		bic	r2, r2, #65280
+ 208 00d0 012C82E3 		orr	r2, r2, #256
+ 209 00d4 382883E5 		str	r2, [r3, #2104]
+ 117:main.c        **** 	   
+ 118:main.c        ****       //(3).mask priority ----0xff 最低优先级的值
+ 119:main.c        ****       //ICCPMR_CPU0[0:7] = 0xff        //0x1048_0004			
+ 120:main.c        **** 		  REG_WRITE(ICCPMR_CPU0,(REG_READ(ICCPMR_CPU0)&(~(0xff))) | (0xff));
+ 210              		.loc 1 120 0
+ 211 00d8 24209FE5 		ldr	r2, .L12
+ 212 00dc 041092E5 		ldr	r1, [r2, #4]
+ 213 00e0 FF1081E3 		orr	r1, r1, #255
+ 214 00e4 041082E5 		str	r1, [r2, #4]
+ 121:main.c        ****      
+ 122:main.c        **** 	   //(4).enable for cpu0 interface
+ 123:main.c        ****      //ICCICR_CPU0[0] = 0b1          //0x1048_0000
+ 124:main.c        **** 	    REG_WRITE(ICCICR_CPU0,(REG_READ(ICCICR_CPU0)&(~(0x1))) | (0x1));
+ 215              		.loc 1 124 0
+ 216 00e8 001092E5 		ldr	r1, [r2, #0]
+ 217 00ec 011081E3 		orr	r1, r1, #1
+ 218 00f0 001082E5 		str	r1, [r2, #0]
+ARM GAS  C:\Users\ADMINI~1.MIC\AppData\Local\Temp\ccHYrmEr.s 			page 7
+
+
+ 125:main.c        ****       //(5). no secure
+ 126:main.c        ****       //ICDISR1_CPU0[25] = 0b1         //0x1049_0084
+ 127:main.c        ****       REG_WRITE(ICDISR1_CPU0,(REG_READ(ICDISR1_CPU0)&(~(0x1<<25))) | (0x1<<25));
+ 219              		.loc 1 127 0
+ 220 00f4 842093E5 		ldr	r2, [r3, #132]
+ 221 00f8 022482E3 		orr	r2, r2, #33554432
+ 222 00fc 842083E5 		str	r2, [r3, #132]
+ 128:main.c        **** }
+ 223              		.loc 1 128 0
+ 224 0100 1EFF2FE1 		bx	lr
+ 225              	.L13:
+ 226              		.align	2
+ 227              	.L12:
+ 228 0104 00004810 		.word	273154048
+ 229              		.cfi_endproc
+ 230              	.LFE6:
+ 231              		.size	interrup_init, .-interrup_init
+ 232              		.align	2
+ 233              		.global	main
+ 234              		.type	main, %function
+ 235              	main:
+ 236              	.LFB7:
+ 129:main.c        **** 
+ 130:main.c        **** int flag = 0;
+ 131:main.c        **** int main()
+ 132:main.c        **** {
+ 237              		.loc 1 132 0
+ 238              		.cfi_startproc
+ 239              		@ Function supports interworking.
+ 240              		@ Volatile: function does not return.
+ 241              		@ args = 0, pretend = 0, frame = 0
+ 242              		@ frame_needed = 1, uses_anonymous_args = 0
+ 243 0108 0DC0A0E1 		mov	ip, sp
+ 244              	.LCFI0:
+ 245              		.cfi_def_cfa_register 12
+ 246 010c 00D82DE9 		stmfd	sp!, {fp, ip, lr, pc}
+ 247 0110 04B04CE2 		sub	fp, ip, #4
+ 248              		.cfi_offset 14, -8
+ 249              		.cfi_offset 13, -12
+ 250              		.cfi_offset 11, -16
+ 251              	.LCFI1:
+ 252              		.cfi_def_cfa 11, 4
+ 133:main.c        **** 	
+ 134:main.c        ****  //	 int state;
+ 135:main.c        **** 	 led_init();
+ 253              		.loc 1 135 0
+ 254 0114 FEFFFFEB 		bl	led_init
+ 136:main.c        ****    key_init();
+ 255              		.loc 1 136 0
+ 256 0118 FEFFFFEB 		bl	key_init
+ 137:main.c        **** 	 interrup_init();
+ 257              		.loc 1 137 0
+ 258 011c FEFFFFEB 		bl	interrup_init
+ 259              	.L15:
+ 138:main.c        **** 		while(1)
+ 139:main.c        **** 		{				
+ 140:main.c        **** 				  led_off();
+ARM GAS  C:\Users\ADMINI~1.MIC\AppData\Local\Temp\ccHYrmEr.s 			page 8
+
+
+ 260              		.loc 1 140 0 discriminator 1
+ 261 0120 FEFFFFEB 		bl	led_off
+ 262 0124 FDFFFFEA 		b	.L15
+ 263              		.cfi_endproc
+ 264              	.LFE7:
+ 265              		.size	main, .-main
+ 266              		.align	2
+ 267              		.global	do_irq
+ 268              		.type	do_irq, %function
+ 269              	do_irq:
+ 270              	.LFB8:
+ 141:main.c        **** 			    //delays();
+ 142:main.c        **** 			    //led_on();
+ 143:main.c        **** 		//	    delays();
+ 144:main.c        **** 		}
+ 145:main.c        **** 		
+ 146:main.c        **** 		return 0;
+ 147:main.c        **** }
+ 148:main.c        **** 
+ 149:main.c        **** 
+ 150:main.c        **** //中断处理函数
+ 151:main.c        **** 
+ 152:main.c        **** /*
+ 153:main.c        **** void do_irq()
+ 154:main.c        **** {
+ 155:main.c        **** 	int irq_num  = REG_READ(ICCIAR_CPU0)&0x3ff;
+ 156:main.c        **** 	
+ 157:main.c        **** 	switch(irq_num)
+ 158:main.c        **** 	{
+ 159:main.c        **** 		case 57:
+ 160:main.c        **** 			   if(flag == 0)
+ 161:main.c        **** 				 {
+ 162:main.c        **** 			      led_off();
+ 163:main.c        **** 				    flag = 1;
+ 164:main.c        **** 				 }else if(flag == 1)
+ 165:main.c        **** 				 {
+ 166:main.c        **** 					  led_on();
+ 167:main.c        **** 				    flag = 0;
+ 168:main.c        **** 				 }
+ 169:main.c        **** 				 
+ 170:main.c        **** 				 //清除 中断请求标志
+ 171:main.c        **** 				 REG_WRITE(EXT_INT41_PEND,REG_READ(EXT_INT41_PEND)|(0x1<<1));
+ 172:main.c        **** 				 REG_WRITE(ICDICPR1_CPU0,REG_READ(ICDICPR1_CPU0)|(0x1<<25));
+ 173:main.c        ****           
+ 174:main.c        ****          break;				 
+ 175:main.c        **** 		//case 
+ 176:main.c        **** 		default:
+ 177:main.c        **** 			break;
+ 178:main.c        **** 	}
+ 179:main.c        **** 	 REG_WRITE(ICCEOIR,(REG_READ(ICCEOIR)&(~0x3ff))|irq_num);
+ 180:main.c        **** 	
+ 181:main.c        **** }
+ 182:main.c        **** */
+ 183:main.c        **** 
+ 184:main.c        **** void do_irq(void)
+ 185:main.c        **** {
+ 271              		.loc 1 185 0
+ARM GAS  C:\Users\ADMINI~1.MIC\AppData\Local\Temp\ccHYrmEr.s 			page 9
+
+
+ 272              		.cfi_startproc
+ 273              		@ Function supports interworking.
+ 274              		@ args = 0, pretend = 0, frame = 0
+ 275              		@ frame_needed = 0, uses_anonymous_args = 0
+ 276              		@ link register save eliminated.
+ 277              	.LVL12:
+ 186:main.c        ****   //1.获取中断号
+ 187:main.c        ****   unsigned int temp = 0;
+ 188:main.c        **** 	int irq_num = REG_READ(ICCIAR_CPU0)&0x3ff; // 0b11 1111 1111 
+ 278              		.loc 1 188 0
+ 279 0128 94309FE5 		ldr	r3, .L21
+ 280 012c 0C2093E5 		ldr	r2, [r3, #12]
+ 281 0130 022BA0E1 		mov	r2, r2, asl #22
+ 282 0134 222BA0E1 		mov	r2, r2, lsr #22
+ 283              	.LVL13:
+ 189:main.c        **** 
+ 190:main.c        **** 	switch(irq_num)
+ 284              		.loc 1 190 0
+ 285 0138 390052E3 		cmp	r2, #57
+ 286 013c 1900001A 		bne	.L17
+ 191:main.c        **** 	{
+ 192:main.c        **** 	    case 57:
+ 193:main.c        **** 	     if(flag == 0)
+ 287              		.loc 1 193 0
+ 288 0140 80309FE5 		ldr	r3, .L21+4
+ 289 0144 003093E5 		ldr	r3, [r3, #0]
+ 290 0148 000053E3 		cmp	r3, #0
+ 291 014c 0700001A 		bne	.L19
+ 194:main.c        **** 			 {
+ 195:main.c        **** 		       //按下---亮
+ 196:main.c        **** 			     temp = REG_READ(GPX2DAT); 
+ 292              		.loc 1 196 0
+ 293 0150 1134A0E3 		mov	r3, #285212672
+ 294 0154 441C93E5 		ldr	r1, [r3, #3140]
+ 295              	.LVL14:
+ 197:main.c        **** 			     temp = (~(0x1<<7))&temp;
+ 198:main.c        **** 			     temp = (0x1 << 7)|temp;
+ 296              		.loc 1 198 0
+ 297 0158 801081E3 		orr	r1, r1, #128
+ 298              	.LVL15:
+ 199:main.c        **** 			     REG_WRITE(GPX2DAT,temp);
+ 299              		.loc 1 199 0
+ 300 015c 441C83E5 		str	r1, [r3, #3140]
+ 200:main.c        **** 				 flag = 1;
+ 301              		.loc 1 200 0
+ 302 0160 0110A0E3 		mov	r1, #1
+ 303              	.LVL16:
+ 304 0164 5C309FE5 		ldr	r3, .L21+4
+ 305              	.LVL17:
+ 306 0168 001083E5 		str	r1, [r3, #0]
+ 307 016c 050000EA 		b	.L20
+ 308              	.LVL18:
+ 309              	.L19:
+ 201:main.c        **** 			 } else 
+ 202:main.c        **** 			 {
+ 203:main.c        **** 			       //不按---灭 
+ 204:main.c        **** 			     REG_READ(GPX2DAT); 
+ARM GAS  C:\Users\ADMINI~1.MIC\AppData\Local\Temp\ccHYrmEr.s 			page 10
+
+
+ 310              		.loc 1 204 0
+ 311 0170 1114A0E3 		mov	r1, #285212672
+ 312 0174 443C91E5 		ldr	r3, [r1, #3140]
+ 205:main.c        **** 				   temp = (~(0x1<<7))&temp;
+ 206:main.c        **** 				   temp = (0x0 << 7)|temp;
+ 207:main.c        **** 				   REG_WRITE(GPX2DAT,temp);
+ 313              		.loc 1 207 0
+ 314 0178 0030A0E3 		mov	r3, #0
+ 315 017c 443C81E5 		str	r3, [r1, #3140]
+ 208:main.c        **** 				   flag = 0;
+ 316              		.loc 1 208 0
+ 317 0180 40109FE5 		ldr	r1, .L21+4
+ 318 0184 003081E5 		str	r3, [r1, #0]
+ 319              	.LVL19:
+ 320              	.L20:
+ 209:main.c        **** 		     }
+ 210:main.c        **** 			     //清除中断
+ 211:main.c        **** 			     REG_WRITE(EXT_INT41_PEND,(REG_READ( EXT_INT41_PEND)&(~(0x1<<1))) | (0x1<<1));
+ 321              		.loc 1 211 0
+ 322 0188 1134A0E3 		mov	r3, #285212672
+ 323 018c 441F93E5 		ldr	r1, [r3, #3908]
+ 324 0190 021081E3 		orr	r1, r1, #2
+ 325 0194 441F83E5 		str	r1, [r3, #3908]
+ 212:main.c        **** 		       REG_WRITE(ICDICPR1_CPU0 ,(REG_READ(ICDICPR1_CPU0)&(~(0x1<<25)))  | (0x1<<25));
+ 326              		.loc 1 212 0
+ 327 0198 B73843E2 		sub	r3, r3, #11993088
+ 328 019c 841293E5 		ldr	r1, [r3, #644]
+ 329 01a0 021481E3 		orr	r1, r1, #33554432
+ 330 01a4 841283E5 		str	r1, [r3, #644]
+ 331              	.L17:
+ 213:main.c        **** 			 break;
+ 214:main.c        **** 
+ 215:main.c        **** 		default:
+ 216:main.c        **** 		     break;
+ 217:main.c        **** 	}
+ 218:main.c        **** 	REG_WRITE(ICCEOIR,(REG_READ(ICCEOIR) & (~(0x3ff)) | irq_num ));	
+ 332              		.loc 1 218 0
+ 333 01a8 14309FE5 		ldr	r3, .L21
+ 334 01ac 101093E5 		ldr	r1, [r3, #16]
+ 335 01b0 FF1FC1E3 		bic	r1, r1, #1020
+ 336 01b4 0310C1E3 		bic	r1, r1, #3
+ 337 01b8 012082E1 		orr	r2, r2, r1
+ 338              	.LVL20:
+ 339 01bc 102083E5 		str	r2, [r3, #16]
+ 219:main.c        **** 	//清除结束中断信号
+ 220:main.c        ****   //REG_WRITE(ICCEOIR,REG_READ(ICCIAR_CPU0) | irq_num);
+ 221:main.c        **** }...
+ 340              		.loc 1 221 0
+ 341 01c0 1EFF2FE1 		bx	lr
+ 342              	.L22:
+ 343              		.align	2
+ 344              	.L21:
+ 345 01c4 00004810 		.word	273154048
+ 346 01c8 00000000 		.word	.LANCHOR0
+ 347              		.cfi_endproc
+ 348              	.LFE8:
+ 349              		.size	do_irq, .-do_irq
+ARM GAS  C:\Users\ADMINI~1.MIC\AppData\Local\Temp\ccHYrmEr.s 			page 11
+
+
+ 350              		.global	flag
+ 351              		.bss
+ 352              		.align	2
+ 353              		.set	.LANCHOR0,. + 0
+ 354              		.type	flag, %object
+ 355              		.size	flag, 4
+ 356              	flag:
+ 357 0000 00000000 		.space	4
+ 358              		.text
+ 359              	.Letext0:
+ 360              		.section	.debug_info,"",%progbits
+ 361              	.Ldebug_info0:
+ 362 0000 9B010000 		.4byte	0x19b
+ 363 0004 0200     		.2byte	0x2
+ 364 0006 00000000 		.4byte	.Ldebug_abbrev0
+ 365 000a 04       		.byte	0x4
+ 366 000b 01       		.uleb128 0x1
+ 367 000c 8D000000 		.4byte	.LASF12
+ 368 0010 01       		.byte	0x1
+ 369 0011 70000000 		.4byte	.LASF13
+ 370 0015 2B000000 		.4byte	.LASF14
+ 371 0019 00000000 		.4byte	.Ltext0
+ 372 001d CC010000 		.4byte	.Letext0
+ 373 0021 00000000 		.4byte	.Ldebug_line0
+ 374 0025 02       		.uleb128 0x2
+ 375 0026 01       		.byte	0x1
+ 376 0027 22000000 		.4byte	.LASF0
+ 377 002b 01       		.byte	0x1
+ 378 002c 28       		.byte	0x28
+ 379 002d 00000000 		.4byte	.LFB0
+ 380 0031 18000000 		.4byte	.LFE0
+ 381 0035 02       		.byte	0x2
+ 382 0036 7D       		.byte	0x7d
+ 383 0037 00       		.sleb128 0
+ 384 0038 4C000000 		.4byte	0x4c
+ 385 003c 03       		.uleb128 0x3
+ 386 003d A4000000 		.4byte	.LASF2
+ 387 0041 01       		.byte	0x1
+ 388 0042 2B       		.byte	0x2b
+ 389 0043 4C000000 		.4byte	0x4c
+ 390 0047 00000000 		.4byte	.LLST0
+ 391 004b 00       		.byte	0
+ 392 004c 04       		.uleb128 0x4
+ 393 004d 04       		.byte	0x4
+ 394 004e 05       		.byte	0x5
+ 395 004f 696E7400 		.ascii	"int\000"
+ 396 0053 02       		.uleb128 0x2
+ 397 0054 01       		.byte	0x1
+ 398 0055 BF000000 		.4byte	.LASF1
+ 399 0059 01       		.byte	0x1
+ 400 005a 30       		.byte	0x30
+ 401 005b 18000000 		.4byte	.LFB1
+ 402 005f 2C000000 		.4byte	.LFE1
+ 403 0063 02       		.byte	0x2
+ 404 0064 7D       		.byte	0x7d
+ 405 0065 00       		.sleb128 0
+ 406 0066 7A000000 		.4byte	0x7a
+ARM GAS  C:\Users\ADMINI~1.MIC\AppData\Local\Temp\ccHYrmEr.s 			page 12
+
+
+ 407 006a 03       		.uleb128 0x3
+ 408 006b A4000000 		.4byte	.LASF2
+ 409 006f 01       		.byte	0x1
+ 410 0070 33       		.byte	0x33
+ 411 0071 4C000000 		.4byte	0x4c
+ 412 0075 31000000 		.4byte	.LLST1
+ 413 0079 00       		.byte	0
+ 414 007a 02       		.uleb128 0x2
+ 415 007b 01       		.byte	0x1
+ 416 007c A9000000 		.4byte	.LASF3
+ 417 0080 01       		.byte	0x1
+ 418 0081 38       		.byte	0x38
+ 419 0082 2C000000 		.4byte	.LFB2
+ 420 0086 40000000 		.4byte	.LFE2
+ 421 008a 02       		.byte	0x2
+ 422 008b 7D       		.byte	0x7d
+ 423 008c 00       		.sleb128 0
+ 424 008d A1000000 		.4byte	0xa1
+ 425 0091 03       		.uleb128 0x3
+ 426 0092 A4000000 		.4byte	.LASF2
+ 427 0096 01       		.byte	0x1
+ 428 0097 3B       		.byte	0x3b
+ 429 0098 4C000000 		.4byte	0x4c
+ 430 009c 54000000 		.4byte	.LLST2
+ 431 00a0 00       		.byte	0
+ 432 00a1 02       		.uleb128 0x2
+ 433 00a2 01       		.byte	0x1
+ 434 00a3 0D000000 		.4byte	.LASF4
+ 435 00a7 01       		.byte	0x1
+ 436 00a8 41       		.byte	0x41
+ 437 00a9 40000000 		.4byte	.LFB3
+ 438 00ad 54000000 		.4byte	.LFE3
+ 439 00b1 02       		.byte	0x2
+ 440 00b2 7D       		.byte	0x7d
+ 441 00b3 00       		.sleb128 0
+ 442 00b4 C6000000 		.4byte	0xc6
+ 443 00b8 05       		.uleb128 0x5
+ 444 00b9 6900     		.ascii	"i\000"
+ 445 00bb 01       		.byte	0x1
+ 446 00bc 43       		.byte	0x43
+ 447 00bd 4C000000 		.4byte	0x4c
+ 448 00c1 78000000 		.4byte	.LLST3
+ 449 00c5 00       		.byte	0
+ 450 00c6 02       		.uleb128 0x2
+ 451 00c7 01       		.byte	0x1
+ 452 00c8 B6000000 		.4byte	.LASF5
+ 453 00cc 01       		.byte	0x1
+ 454 00cd 49       		.byte	0x49
+ 455 00ce 54000000 		.4byte	.LFB4
+ 456 00d2 68000000 		.4byte	.LFE4
+ 457 00d6 02       		.byte	0x2
+ 458 00d7 7D       		.byte	0x7d
+ 459 00d8 00       		.sleb128 0
+ 460 00d9 ED000000 		.4byte	0xed
+ 461 00dd 03       		.uleb128 0x3
+ 462 00de A4000000 		.4byte	.LASF2
+ 463 00e2 01       		.byte	0x1
+ARM GAS  C:\Users\ADMINI~1.MIC\AppData\Local\Temp\ccHYrmEr.s 			page 13
+
+
+ 464 00e3 4C       		.byte	0x4c
+ 465 00e4 4C000000 		.4byte	0x4c
+ 466 00e8 90000000 		.4byte	.LLST4
+ 467 00ec 00       		.byte	0
+ 468 00ed 06       		.uleb128 0x6
+ 469 00ee 01       		.byte	0x1
+ 470 00ef 7F000000 		.4byte	.LASF7
+ 471 00f3 01       		.byte	0x1
+ 472 00f4 53       		.byte	0x53
+ 473 00f5 4C000000 		.4byte	0x4c
+ 474 00f9 68000000 		.4byte	.LFB5
+ 475 00fd 74000000 		.4byte	.LFE5
+ 476 0101 02       		.byte	0x2
+ 477 0102 7D       		.byte	0x7d
+ 478 0103 00       		.sleb128 0
+ 479 0104 16010000 		.4byte	0x116
+ 480 0108 07       		.uleb128 0x7
+ 481 0109 99000000 		.4byte	.LASF6
+ 482 010d 01       		.byte	0x1
+ 483 010e 55       		.byte	0x55
+ 484 010f 4C000000 		.4byte	0x4c
+ 485 0113 01       		.byte	0x1
+ 486 0114 50       		.byte	0x50
+ 487 0115 00       		.byte	0
+ 488 0116 08       		.uleb128 0x8
+ 489 0117 01       		.byte	0x1
+ 490 0118 14000000 		.4byte	.LASF15
+ 491 011c 01       		.byte	0x1
+ 492 011d 5D       		.byte	0x5d
+ 493 011e 74000000 		.4byte	.LFB6
+ 494 0122 08010000 		.4byte	.LFE6
+ 495 0126 02       		.byte	0x2
+ 496 0127 7D       		.byte	0x7d
+ 497 0128 00       		.sleb128 0
+ 498 0129 09       		.uleb128 0x9
+ 499 012a 01       		.byte	0x1
+ 500 012b 9F000000 		.4byte	.LASF16
+ 501 012f 01       		.byte	0x1
+ 502 0130 83       		.byte	0x83
+ 503 0131 4C000000 		.4byte	0x4c
+ 504 0135 08010000 		.4byte	.LFB7
+ 505 0139 28010000 		.4byte	.LFE7
+ 506 013d B4000000 		.4byte	.LLST5
+ 507 0141 0A       		.uleb128 0xa
+ 508 0142 01       		.byte	0x1
+ 509 0143 C6000000 		.4byte	.LASF8
+ 510 0147 01       		.byte	0x1
+ 511 0148 B8       		.byte	0xb8
+ 512 0149 01       		.byte	0x1
+ 513 014a 28010000 		.4byte	.LFB8
+ 514 014e CC010000 		.4byte	.LFE8
+ 515 0152 02       		.byte	0x2
+ 516 0153 7D       		.byte	0x7d
+ 517 0154 00       		.sleb128 0
+ 518 0155 78010000 		.4byte	0x178
+ 519 0159 03       		.uleb128 0x3
+ 520 015a A4000000 		.4byte	.LASF2
+ARM GAS  C:\Users\ADMINI~1.MIC\AppData\Local\Temp\ccHYrmEr.s 			page 14
+
+
+ 521 015e 01       		.byte	0x1
+ 522 015f BB       		.byte	0xbb
+ 523 0160 78010000 		.4byte	0x178
+ 524 0164 E0000000 		.4byte	.LLST6
+ 525 0168 03       		.uleb128 0x3
+ 526 0169 77000000 		.4byte	.LASF9
+ 527 016d 01       		.byte	0x1
+ 528 016e BC       		.byte	0xbc
+ 529 016f 4C000000 		.4byte	0x4c
+ 530 0173 38010000 		.4byte	.LLST7
+ 531 0177 00       		.byte	0
+ 532 0178 0B       		.uleb128 0xb
+ 533 0179 04       		.byte	0x4
+ 534 017a 07       		.byte	0x7
+ 535 017b 00000000 		.4byte	.LASF10
+ 536 017f 0C       		.uleb128 0xc
+ 537 0180 B1000000 		.4byte	.LASF11
+ 538 0184 01       		.byte	0x1
+ 539 0185 82       		.byte	0x82
+ 540 0186 4C000000 		.4byte	0x4c
+ 541 018a 01       		.byte	0x1
+ 542 018b 01       		.byte	0x1
+ 543 018c 0D       		.uleb128 0xd
+ 544 018d B1000000 		.4byte	.LASF11
+ 545 0191 01       		.byte	0x1
+ 546 0192 82       		.byte	0x82
+ 547 0193 4C000000 		.4byte	0x4c
+ 548 0197 01       		.byte	0x1
+ 549 0198 05       		.byte	0x5
+ 550 0199 03       		.byte	0x3
+ 551 019a 00000000 		.4byte	flag
+ 552 019e 00       		.byte	0
+ 553              		.section	.debug_abbrev,"",%progbits
+ 554              	.Ldebug_abbrev0:
+ 555 0000 01       		.uleb128 0x1
+ 556 0001 11       		.uleb128 0x11
+ 557 0002 01       		.byte	0x1
+ 558 0003 25       		.uleb128 0x25
+ 559 0004 0E       		.uleb128 0xe
+ 560 0005 13       		.uleb128 0x13
+ 561 0006 0B       		.uleb128 0xb
+ 562 0007 03       		.uleb128 0x3
+ 563 0008 0E       		.uleb128 0xe
+ 564 0009 1B       		.uleb128 0x1b
+ 565 000a 0E       		.uleb128 0xe
+ 566 000b 11       		.uleb128 0x11
+ 567 000c 01       		.uleb128 0x1
+ 568 000d 12       		.uleb128 0x12
+ 569 000e 01       		.uleb128 0x1
+ 570 000f 10       		.uleb128 0x10
+ 571 0010 06       		.uleb128 0x6
+ 572 0011 00       		.byte	0
+ 573 0012 00       		.byte	0
+ 574 0013 02       		.uleb128 0x2
+ 575 0014 2E       		.uleb128 0x2e
+ 576 0015 01       		.byte	0x1
+ 577 0016 3F       		.uleb128 0x3f
+ARM GAS  C:\Users\ADMINI~1.MIC\AppData\Local\Temp\ccHYrmEr.s 			page 15
+
+
+ 578 0017 0C       		.uleb128 0xc
+ 579 0018 03       		.uleb128 0x3
+ 580 0019 0E       		.uleb128 0xe
+ 581 001a 3A       		.uleb128 0x3a
+ 582 001b 0B       		.uleb128 0xb
+ 583 001c 3B       		.uleb128 0x3b
+ 584 001d 0B       		.uleb128 0xb
+ 585 001e 11       		.uleb128 0x11
+ 586 001f 01       		.uleb128 0x1
+ 587 0020 12       		.uleb128 0x12
+ 588 0021 01       		.uleb128 0x1
+ 589 0022 40       		.uleb128 0x40
+ 590 0023 0A       		.uleb128 0xa
+ 591 0024 01       		.uleb128 0x1
+ 592 0025 13       		.uleb128 0x13
+ 593 0026 00       		.byte	0
+ 594 0027 00       		.byte	0
+ 595 0028 03       		.uleb128 0x3
+ 596 0029 34       		.uleb128 0x34
+ 597 002a 00       		.byte	0
+ 598 002b 03       		.uleb128 0x3
+ 599 002c 0E       		.uleb128 0xe
+ 600 002d 3A       		.uleb128 0x3a
+ 601 002e 0B       		.uleb128 0xb
+ 602 002f 3B       		.uleb128 0x3b
+ 603 0030 0B       		.uleb128 0xb
+ 604 0031 49       		.uleb128 0x49
+ 605 0032 13       		.uleb128 0x13
+ 606 0033 02       		.uleb128 0x2
+ 607 0034 06       		.uleb128 0x6
+ 608 0035 00       		.byte	0
+ 609 0036 00       		.byte	0
+ 610 0037 04       		.uleb128 0x4
+ 611 0038 24       		.uleb128 0x24
+ 612 0039 00       		.byte	0
+ 613 003a 0B       		.uleb128 0xb
+ 614 003b 0B       		.uleb128 0xb
+ 615 003c 3E       		.uleb128 0x3e
+ 616 003d 0B       		.uleb128 0xb
+ 617 003e 03       		.uleb128 0x3
+ 618 003f 08       		.uleb128 0x8
+ 619 0040 00       		.byte	0
+ 620 0041 00       		.byte	0
+ 621 0042 05       		.uleb128 0x5
+ 622 0043 34       		.uleb128 0x34
+ 623 0044 00       		.byte	0
+ 624 0045 03       		.uleb128 0x3
+ 625 0046 08       		.uleb128 0x8
+ 626 0047 3A       		.uleb128 0x3a
+ 627 0048 0B       		.uleb128 0xb
+ 628 0049 3B       		.uleb128 0x3b
+ 629 004a 0B       		.uleb128 0xb
+ 630 004b 49       		.uleb128 0x49
+ 631 004c 13       		.uleb128 0x13
+ 632 004d 02       		.uleb128 0x2
+ 633 004e 06       		.uleb128 0x6
+ 634 004f 00       		.byte	0
+ARM GAS  C:\Users\ADMINI~1.MIC\AppData\Local\Temp\ccHYrmEr.s 			page 16
+
+
+ 635 0050 00       		.byte	0
+ 636 0051 06       		.uleb128 0x6
+ 637 0052 2E       		.uleb128 0x2e
+ 638 0053 01       		.byte	0x1
+ 639 0054 3F       		.uleb128 0x3f
+ 640 0055 0C       		.uleb128 0xc
+ 641 0056 03       		.uleb128 0x3
+ 642 0057 0E       		.uleb128 0xe
+ 643 0058 3A       		.uleb128 0x3a
+ 644 0059 0B       		.uleb128 0xb
+ 645 005a 3B       		.uleb128 0x3b
+ 646 005b 0B       		.uleb128 0xb
+ 647 005c 49       		.uleb128 0x49
+ 648 005d 13       		.uleb128 0x13
+ 649 005e 11       		.uleb128 0x11
+ 650 005f 01       		.uleb128 0x1
+ 651 0060 12       		.uleb128 0x12
+ 652 0061 01       		.uleb128 0x1
+ 653 0062 40       		.uleb128 0x40
+ 654 0063 0A       		.uleb128 0xa
+ 655 0064 01       		.uleb128 0x1
+ 656 0065 13       		.uleb128 0x13
+ 657 0066 00       		.byte	0
+ 658 0067 00       		.byte	0
+ 659 0068 07       		.uleb128 0x7
+ 660 0069 34       		.uleb128 0x34
+ 661 006a 00       		.byte	0
+ 662 006b 03       		.uleb128 0x3
+ 663 006c 0E       		.uleb128 0xe
+ 664 006d 3A       		.uleb128 0x3a
+ 665 006e 0B       		.uleb128 0xb
+ 666 006f 3B       		.uleb128 0x3b
+ 667 0070 0B       		.uleb128 0xb
+ 668 0071 49       		.uleb128 0x49
+ 669 0072 13       		.uleb128 0x13
+ 670 0073 02       		.uleb128 0x2
+ 671 0074 0A       		.uleb128 0xa
+ 672 0075 00       		.byte	0
+ 673 0076 00       		.byte	0
+ 674 0077 08       		.uleb128 0x8
+ 675 0078 2E       		.uleb128 0x2e
+ 676 0079 00       		.byte	0
+ 677 007a 3F       		.uleb128 0x3f
+ 678 007b 0C       		.uleb128 0xc
+ 679 007c 03       		.uleb128 0x3
+ 680 007d 0E       		.uleb128 0xe
+ 681 007e 3A       		.uleb128 0x3a
+ 682 007f 0B       		.uleb128 0xb
+ 683 0080 3B       		.uleb128 0x3b
+ 684 0081 0B       		.uleb128 0xb
+ 685 0082 11       		.uleb128 0x11
+ 686 0083 01       		.uleb128 0x1
+ 687 0084 12       		.uleb128 0x12
+ 688 0085 01       		.uleb128 0x1
+ 689 0086 40       		.uleb128 0x40
+ 690 0087 0A       		.uleb128 0xa
+ 691 0088 00       		.byte	0
+ARM GAS  C:\Users\ADMINI~1.MIC\AppData\Local\Temp\ccHYrmEr.s 			page 17
+
+
+ 692 0089 00       		.byte	0
+ 693 008a 09       		.uleb128 0x9
+ 694 008b 2E       		.uleb128 0x2e
+ 695 008c 00       		.byte	0
+ 696 008d 3F       		.uleb128 0x3f
+ 697 008e 0C       		.uleb128 0xc
+ 698 008f 03       		.uleb128 0x3
+ 699 0090 0E       		.uleb128 0xe
+ 700 0091 3A       		.uleb128 0x3a
+ 701 0092 0B       		.uleb128 0xb
+ 702 0093 3B       		.uleb128 0x3b
+ 703 0094 0B       		.uleb128 0xb
+ 704 0095 49       		.uleb128 0x49
+ 705 0096 13       		.uleb128 0x13
+ 706 0097 11       		.uleb128 0x11
+ 707 0098 01       		.uleb128 0x1
+ 708 0099 12       		.uleb128 0x12
+ 709 009a 01       		.uleb128 0x1
+ 710 009b 40       		.uleb128 0x40
+ 711 009c 06       		.uleb128 0x6
+ 712 009d 00       		.byte	0
+ 713 009e 00       		.byte	0
+ 714 009f 0A       		.uleb128 0xa
+ 715 00a0 2E       		.uleb128 0x2e
+ 716 00a1 01       		.byte	0x1
+ 717 00a2 3F       		.uleb128 0x3f
+ 718 00a3 0C       		.uleb128 0xc
+ 719 00a4 03       		.uleb128 0x3
+ 720 00a5 0E       		.uleb128 0xe
+ 721 00a6 3A       		.uleb128 0x3a
+ 722 00a7 0B       		.uleb128 0xb
+ 723 00a8 3B       		.uleb128 0x3b
+ 724 00a9 0B       		.uleb128 0xb
+ 725 00aa 27       		.uleb128 0x27
+ 726 00ab 0C       		.uleb128 0xc
+ 727 00ac 11       		.uleb128 0x11
+ 728 00ad 01       		.uleb128 0x1
+ 729 00ae 12       		.uleb128 0x12
+ 730 00af 01       		.uleb128 0x1
+ 731 00b0 40       		.uleb128 0x40
+ 732 00b1 0A       		.uleb128 0xa
+ 733 00b2 01       		.uleb128 0x1
+ 734 00b3 13       		.uleb128 0x13
+ 735 00b4 00       		.byte	0
+ 736 00b5 00       		.byte	0
+ 737 00b6 0B       		.uleb128 0xb
+ 738 00b7 24       		.uleb128 0x24
+ 739 00b8 00       		.byte	0
+ 740 00b9 0B       		.uleb128 0xb
+ 741 00ba 0B       		.uleb128 0xb
+ 742 00bb 3E       		.uleb128 0x3e
+ 743 00bc 0B       		.uleb128 0xb
+ 744 00bd 03       		.uleb128 0x3
+ 745 00be 0E       		.uleb128 0xe
+ 746 00bf 00       		.byte	0
+ 747 00c0 00       		.byte	0
+ 748 00c1 0C       		.uleb128 0xc
+ARM GAS  C:\Users\ADMINI~1.MIC\AppData\Local\Temp\ccHYrmEr.s 			page 18
+
+
+ 749 00c2 34       		.uleb128 0x34
+ 750 00c3 00       		.byte	0
+ 751 00c4 03       		.uleb128 0x3
+ 752 00c5 0E       		.uleb128 0xe
+ 753 00c6 3A       		.uleb128 0x3a
+ 754 00c7 0B       		.uleb128 0xb
+ 755 00c8 3B       		.uleb128 0x3b
+ 756 00c9 0B       		.uleb128 0xb
+ 757 00ca 49       		.uleb128 0x49
+ 758 00cb 13       		.uleb128 0x13
+ 759 00cc 3F       		.uleb128 0x3f
+ 760 00cd 0C       		.uleb128 0xc
+ 761 00ce 3C       		.uleb128 0x3c
+ 762 00cf 0C       		.uleb128 0xc
+ 763 00d0 00       		.byte	0
+ 764 00d1 00       		.byte	0
+ 765 00d2 0D       		.uleb128 0xd
+ 766 00d3 34       		.uleb128 0x34
+ 767 00d4 00       		.byte	0
+ 768 00d5 03       		.uleb128 0x3
+ 769 00d6 0E       		.uleb128 0xe
+ 770 00d7 3A       		.uleb128 0x3a
+ 771 00d8 0B       		.uleb128 0xb
+ 772 00d9 3B       		.uleb128 0x3b
+ 773 00da 0B       		.uleb128 0xb
+ 774 00db 49       		.uleb128 0x49
+ 775 00dc 13       		.uleb128 0x13
+ 776 00dd 3F       		.uleb128 0x3f
+ 777 00de 0C       		.uleb128 0xc
+ 778 00df 02       		.uleb128 0x2
+ 779 00e0 0A       		.uleb128 0xa
+ 780 00e1 00       		.byte	0
+ 781 00e2 00       		.byte	0
+ 782 00e3 00       		.byte	0
+ 783              		.section	.debug_loc,"",%progbits
+ 784              	.Ldebug_loc0:
+ 785              	.LLST0:
+ 786 0000 08000000 		.4byte	.LVL0-.Ltext0
+ 787 0004 0C000000 		.4byte	.LVL1-.Ltext0
+ 788 0008 0100     		.2byte	0x1
+ 789 000a 52       		.byte	0x52
+ 790 000b 0C000000 		.4byte	.LVL1-.Ltext0
+ 791 000f 10000000 		.4byte	.LVL2-.Ltext0
+ 792 0013 0900     		.2byte	0x9
+ 793 0015 72       		.byte	0x72
+ 794 0016 00       		.sleb128 0
+ 795 0017 0C       		.byte	0xc
+ 796 0018 00000010 		.4byte	0x10000000
+ 797 001c 21       		.byte	0x21
+ 798 001d 9F       		.byte	0x9f
+ 799 001e 10000000 		.4byte	.LVL2-.Ltext0
+ 800 0022 18000000 		.4byte	.LFE0-.Ltext0
+ 801 0026 0100     		.2byte	0x1
+ 802 0028 52       		.byte	0x52
+ 803 0029 00000000 		.4byte	0
+ 804 002d 00000000 		.4byte	0
+ 805              	.LLST1:
+ARM GAS  C:\Users\ADMINI~1.MIC\AppData\Local\Temp\ccHYrmEr.s 			page 19
+
+
+ 806 0031 20000000 		.4byte	.LVL3-.Ltext0
+ 807 0035 24000000 		.4byte	.LVL4-.Ltext0
+ 808 0039 0600     		.2byte	0x6
+ 809 003b 72       		.byte	0x72
+ 810 003c 00       		.sleb128 0
+ 811 003d 08       		.byte	0x8
+ 812 003e 80       		.byte	0x80
+ 813 003f 21       		.byte	0x21
+ 814 0040 9F       		.byte	0x9f
+ 815 0041 24000000 		.4byte	.LVL4-.Ltext0
+ 816 0045 2C000000 		.4byte	.LFE1-.Ltext0
+ 817 0049 0100     		.2byte	0x1
+ 818 004b 52       		.byte	0x52
+ 819 004c 00000000 		.4byte	0
+ 820 0050 00000000 		.4byte	0
+ 821              	.LLST2:
+ 822 0054 34000000 		.4byte	.LVL5-.Ltext0
+ 823 0058 38000000 		.4byte	.LVL6-.Ltext0
+ 824 005c 0700     		.2byte	0x7
+ 825 005e 72       		.byte	0x72
+ 826 005f 00       		.sleb128 0
+ 827 0060 0B       		.byte	0xb
+ 828 0061 7FFF     		.2byte	0xff7f
+ 829 0063 1A       		.byte	0x1a
+ 830 0064 9F       		.byte	0x9f
+ 831 0065 38000000 		.4byte	.LVL6-.Ltext0
+ 832 0069 40000000 		.4byte	.LFE2-.Ltext0
+ 833 006d 0100     		.2byte	0x1
+ 834 006f 52       		.byte	0x52
+ 835 0070 00000000 		.4byte	0
+ 836 0074 00000000 		.4byte	0
+ 837              	.LLST3:
+ 838 0078 40000000 		.4byte	.LVL7-.Ltext0
+ 839 007c 44000000 		.4byte	.LVL8-.Ltext0
+ 840 0080 0600     		.2byte	0x6
+ 841 0082 0C       		.byte	0xc
+ 842 0083 40420F00 		.4byte	0xf4240
+ 843 0087 9F       		.byte	0x9f
+ 844 0088 00000000 		.4byte	0
+ 845 008c 00000000 		.4byte	0
+ 846              	.LLST4:
+ 847 0090 5C000000 		.4byte	.LVL9-.Ltext0
+ 848 0094 60000000 		.4byte	.LVL10-.Ltext0
+ 849 0098 0700     		.2byte	0x7
+ 850 009a 72       		.byte	0x72
+ 851 009b 00       		.sleb128 0
+ 852 009c 0B       		.byte	0xb
+ 853 009d 0FFF     		.2byte	0xff0f
+ 854 009f 1A       		.byte	0x1a
+ 855 00a0 9F       		.byte	0x9f
+ 856 00a1 60000000 		.4byte	.LVL10-.Ltext0
+ 857 00a5 68000000 		.4byte	.LFE4-.Ltext0
+ 858 00a9 0100     		.2byte	0x1
+ 859 00ab 52       		.byte	0x52
+ 860 00ac 00000000 		.4byte	0
+ 861 00b0 00000000 		.4byte	0
+ 862              	.LLST5:
+ARM GAS  C:\Users\ADMINI~1.MIC\AppData\Local\Temp\ccHYrmEr.s 			page 20
+
+
+ 863 00b4 08010000 		.4byte	.LFB7-.Ltext0
+ 864 00b8 0C010000 		.4byte	.LCFI0-.Ltext0
+ 865 00bc 0200     		.2byte	0x2
+ 866 00be 7D       		.byte	0x7d
+ 867 00bf 00       		.sleb128 0
+ 868 00c0 0C010000 		.4byte	.LCFI0-.Ltext0
+ 869 00c4 14010000 		.4byte	.LCFI1-.Ltext0
+ 870 00c8 0200     		.2byte	0x2
+ 871 00ca 7C       		.byte	0x7c
+ 872 00cb 00       		.sleb128 0
+ 873 00cc 14010000 		.4byte	.LCFI1-.Ltext0
+ 874 00d0 28010000 		.4byte	.LFE7-.Ltext0
+ 875 00d4 0200     		.2byte	0x2
+ 876 00d6 7B       		.byte	0x7b
+ 877 00d7 04       		.sleb128 4
+ 878 00d8 00000000 		.4byte	0
+ 879 00dc 00000000 		.4byte	0
+ 880              	.LLST6:
+ 881 00e0 28010000 		.4byte	.LVL12-.Ltext0
+ 882 00e4 58010000 		.4byte	.LVL14-.Ltext0
+ 883 00e8 0200     		.2byte	0x2
+ 884 00ea 30       		.byte	0x30
+ 885 00eb 9F       		.byte	0x9f
+ 886 00ec 58010000 		.4byte	.LVL14-.Ltext0
+ 887 00f0 5C010000 		.4byte	.LVL15-.Ltext0
+ 888 00f4 0700     		.2byte	0x7
+ 889 00f6 71       		.byte	0x71
+ 890 00f7 00       		.sleb128 0
+ 891 00f8 0B       		.byte	0xb
+ 892 00f9 7FFF     		.2byte	0xff7f
+ 893 00fb 1A       		.byte	0x1a
+ 894 00fc 9F       		.byte	0x9f
+ 895 00fd 5C010000 		.4byte	.LVL15-.Ltext0
+ 896 0101 64010000 		.4byte	.LVL16-.Ltext0
+ 897 0105 0100     		.2byte	0x1
+ 898 0107 51       		.byte	0x51
+ 899 0108 64010000 		.4byte	.LVL16-.Ltext0
+ 900 010c 68010000 		.4byte	.LVL17-.Ltext0
+ 901 0110 0300     		.2byte	0x3
+ 902 0112 73       		.byte	0x73
+ 903 0113 C418     		.sleb128 3140
+ 904 0115 68010000 		.4byte	.LVL17-.Ltext0
+ 905 0119 70010000 		.4byte	.LVL18-.Ltext0
+ 906 011d 0500     		.2byte	0x5
+ 907 011f 0C       		.byte	0xc
+ 908 0120 440C0011 		.4byte	0x11000c44
+ 909 0124 70010000 		.4byte	.LVL18-.Ltext0
+ 910 0128 88010000 		.4byte	.LVL19-.Ltext0
+ 911 012c 0200     		.2byte	0x2
+ 912 012e 30       		.byte	0x30
+ 913 012f 9F       		.byte	0x9f
+ 914 0130 00000000 		.4byte	0
+ 915 0134 00000000 		.4byte	0
+ 916              	.LLST7:
+ 917 0138 38010000 		.4byte	.LVL13-.Ltext0
+ 918 013c BC010000 		.4byte	.LVL20-.Ltext0
+ 919 0140 0100     		.2byte	0x1
+ARM GAS  C:\Users\ADMINI~1.MIC\AppData\Local\Temp\ccHYrmEr.s 			page 21
+
+
+ 920 0142 52       		.byte	0x52
+ 921 0143 00000000 		.4byte	0
+ 922 0147 00000000 		.4byte	0
+ 923              		.section	.debug_aranges,"",%progbits
+ 924 0000 1C000000 		.4byte	0x1c
+ 925 0004 0200     		.2byte	0x2
+ 926 0006 00000000 		.4byte	.Ldebug_info0
+ 927 000a 04       		.byte	0x4
+ 928 000b 00       		.byte	0
+ 929 000c 0000     		.2byte	0
+ 930 000e 0000     		.2byte	0
+ 931 0010 00000000 		.4byte	.Ltext0
+ 932 0014 CC010000 		.4byte	.Letext0-.Ltext0
+ 933 0018 00000000 		.4byte	0
+ 934 001c 00000000 		.4byte	0
+ 935              		.section	.debug_line,"",%progbits
+ 936              	.Ldebug_line0:
+ 937 0000 79000000 		.section	.debug_str,"MS",%progbits,1
+ 937      02001D00 
+ 937      00000201 
+ 937      FB0E0D00 
+ 937      01010101 
+ 938              	.LASF10:
+ 939 0000 756E7369 		.ascii	"unsigned int\000"
+ 939      676E6564 
+ 939      20696E74 
+ 939      00
+ 940              	.LASF4:
+ 941 000d 64656C61 		.ascii	"delays\000"
+ 941      797300
+ 942              	.LASF15:
+ 943 0014 696E7465 		.ascii	"interrup_init\000"
+ 943      72727570 
+ 943      5F696E69 
+ 943      7400
+ 944              	.LASF0:
+ 945 0022 6C65645F 		.ascii	"led_init\000"
+ 945      696E6974 
+ 945      00
+ 946              	.LASF14:
+ 947 002b 473A5C57 		.ascii	"G:\\Win10SystemOptimization\\17021-ARM\\23-\323\262"
+ 947      696E3130 
+ 947      53797374 
+ 947      656D4F70 
+ 947      74696D69 
+ 948 0055 BCFEB2D9 		.ascii	"\274\376\262\331\327\367\\led-key-\326\320\266\317-"
+ 948      D7F75C6C 
+ 948      65642D6B 
+ 948      65792DD6 
+ 948      D0B6CF2D 
+ 949 0069 CEDECFD6 		.ascii	"\316\336\317\326\317\363\000"
+ 949      CFF300
+ 950              	.LASF13:
+ 951 0070 6D61696E 		.ascii	"main.c\000"
+ 951      2E6300
+ 952              	.LASF9:
+ 953 0077 6972715F 		.ascii	"irq_num\000"
+ARM GAS  C:\Users\ADMINI~1.MIC\AppData\Local\Temp\ccHYrmEr.s 			page 22
+
+
+ 953      6E756D00 
+ 954              	.LASF7:
+ 955 007f 6765745F 		.ascii	"get_key_state\000"
+ 955      6B65795F 
+ 955      73746174 
+ 955      6500
+ 956              	.LASF12:
+ 957 008d 474E5520 		.ascii	"GNU C 4.6.2\000"
+ 957      4320342E 
+ 957      362E3200 
+ 958              	.LASF6:
+ 959 0099 73746174 		.ascii	"state\000"
+ 959      6500
+ 960              	.LASF16:
+ 961 009f 6D61696E 		.ascii	"main\000"
+ 961      00
+ 962              	.LASF2:
+ 963 00a4 74656D70 		.ascii	"temp\000"
+ 963      00
+ 964              	.LASF3:
+ 965 00a9 6C65645F 		.ascii	"led_off\000"
+ 965      6F666600 
+ 966              	.LASF11:
+ 967 00b1 666C6167 		.ascii	"flag\000"
+ 967      00
+ 968              	.LASF5:
+ 969 00b6 6B65795F 		.ascii	"key_init\000"
+ 969      696E6974 
+ 969      00
+ 970              	.LASF1:
+ 971 00bf 6C65645F 		.ascii	"led_on\000"
+ 971      6F6E00
+ 972              	.LASF8:
+ 973 00c6 646F5F69 		.ascii	"do_irq\000"
+ 973      727100
+ 974              		.ident	"GCC: (GNU) 4.6.2"
+ARM GAS  C:\Users\ADMINI~1.MIC\AppData\Local\Temp\ccHYrmEr.s 			page 23
+
+
+DEFINED SYMBOLS
+                            *ABS*:00000000 main.c
+C:\Users\ADMINI~1.MIC\AppData\Local\Temp\ccHYrmEr.s:15     .text:00000000 $a
+C:\Users\ADMINI~1.MIC\AppData\Local\Temp\ccHYrmEr.s:18     .text:00000000 led_init
+C:\Users\ADMINI~1.MIC\AppData\Local\Temp\ccHYrmEr.s:47     .text:00000018 led_on
+C:\Users\ADMINI~1.MIC\AppData\Local\Temp\ccHYrmEr.s:72     .text:0000002c led_off
+C:\Users\ADMINI~1.MIC\AppData\Local\Temp\ccHYrmEr.s:97     .text:00000040 delays
+C:\Users\ADMINI~1.MIC\AppData\Local\Temp\ccHYrmEr.s:118    .text:00000050 $d
+C:\Users\ADMINI~1.MIC\AppData\Local\Temp\ccHYrmEr.s:122    .text:00000054 $a
+C:\Users\ADMINI~1.MIC\AppData\Local\Temp\ccHYrmEr.s:125    .text:00000054 key_init
+C:\Users\ADMINI~1.MIC\AppData\Local\Temp\ccHYrmEr.s:150    .text:00000068 get_key_state
+C:\Users\ADMINI~1.MIC\AppData\Local\Temp\ccHYrmEr.s:170    .text:00000074 interrup_init
+C:\Users\ADMINI~1.MIC\AppData\Local\Temp\ccHYrmEr.s:228    .text:00000104 $d
+C:\Users\ADMINI~1.MIC\AppData\Local\Temp\ccHYrmEr.s:232    .text:00000108 $a
+C:\Users\ADMINI~1.MIC\AppData\Local\Temp\ccHYrmEr.s:235    .text:00000108 main
+C:\Users\ADMINI~1.MIC\AppData\Local\Temp\ccHYrmEr.s:269    .text:00000128 do_irq
+C:\Users\ADMINI~1.MIC\AppData\Local\Temp\ccHYrmEr.s:345    .text:000001c4 $d
+C:\Users\ADMINI~1.MIC\AppData\Local\Temp\ccHYrmEr.s:356    .bss:00000000 flag
+C:\Users\ADMINI~1.MIC\AppData\Local\Temp\ccHYrmEr.s:352    .bss:00000000 $d
+                     .debug_frame:00000010 $d
+
+NO UNDEFINED SYMBOLS

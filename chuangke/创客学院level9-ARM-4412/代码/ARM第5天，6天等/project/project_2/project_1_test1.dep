@@ -1,0 +1,2 @@
+Dependencies for Project 'project_1', Target 'test1': (DO NOT MODIFY !)
+F (.\start.s)(0x57C6C027)(-mcpu=arm920t -gdwarf-2 -mthumb-interwork --MD start.d -ID:\software\keil_MDK\ARM\INC\Samsung\ -alhms="start.lst" -o start.o)

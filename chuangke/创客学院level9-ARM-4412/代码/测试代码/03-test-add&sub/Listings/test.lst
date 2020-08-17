@@ -1,0 +1,34 @@
+ARM GAS  test.s 			page 1
+
+
+   1              	.global _start
+   2              	
+   3              	_start:
+   4              	
+   5 0000 0100A0E3 	    mov r0,#1
+   6 0004 0210A0E3 	    mov r1,#2
+   7              		
+   8 0008 012090E0 		adds r2,r0,r1
+   9 000c 013050E0 		subs r3,r0,r1
+  10              		
+  11              		@adds r0,r0,r1
+  12 0010 010090E0 		adds r0,r1
+  13              		
+  14              		
+  15              	
+  16              		
+  17              	stop: 
+  18 0014 FEFFFFEA 		 b stop
+ARM GAS  test.s 			page 2
+
+
+DEFINED SYMBOLS
+                            *ABS*:000001ce __GCC_VERSION
+                            *ABS*:00000001 __GCC
+                            *ABS*:00000208 __UVISION_VERSION
+              test.s:3      .text:00000000 _start
+              test.s:5      .text:00000000 $a
+              test.s:17     .text:00000014 stop
+                   .debug_aranges:0000000c $d
+
+NO UNDEFINED SYMBOLS

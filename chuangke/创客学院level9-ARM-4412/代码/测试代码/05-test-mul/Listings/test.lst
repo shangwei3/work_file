@@ -1,0 +1,40 @@
+ARM GAS  test.s 			page 1
+
+
+   1              	.global _start
+   2              	
+   3              	_start:
+   4              	
+   5 0000 0100A0E3 	    mov r0,#1
+   6 0004 0210A0E3 	    mov r1,#2
+   7 0008 0020E0E3 		mov r2,#0xFFFFFFFF
+   8              		
+   9 000c 013050E0 		subs r3,r0,r1 @// r3 = r0-r1
+  10 0010 014060E0 		rsb  r4,r0,r1 @// r4 = r1-r0 ·´Ïò¼õ·¨
+  11              		
+  12 0014 900105E0 		mul r5,r0,r1  @// r5 = r0 * r1 
+  13              		
+  14 0018 902126E0 		mla r6,r0,r1,r2 @// r6 = r0*r1 + r2 = 1*2 + 3 = 5
+  15              		
+  16 001c 927188E0 		umull r7,r8,r2,r1 @//(r8,r7) = r2 * r1
+  17 0020 9271A8E0 		umlal r7,r8,r2,r1 @//(r8,r7) = (r8,r7)+r2 * r1 = 0x1 ffff fffe 
+  18              		                  @//                          = 0x3 ffff fffc
+  19 0024 9271C8E0 		smull r7,r8,r2,r1 @//(r8,r7) = r2 * r1
+  20 0028 9271E8E0 		smlal r7,r8,r2,r1 @//(r8,r7) = (r8,r7)+r2 * r1 = 0x1 ffff fffe 
+  21              		                  @//                          = 0x3 ffff fffc				  
+  22              		
+  23              	stop: 
+  24 002c FEFFFFEA 		 b stop
+ARM GAS  test.s 			page 2
+
+
+DEFINED SYMBOLS
+                            *ABS*:000001ce __GCC_VERSION
+                            *ABS*:00000001 __GCC
+                            *ABS*:00000208 __UVISION_VERSION
+              test.s:3      .text:00000000 _start
+              test.s:5      .text:00000000 $a
+              test.s:23     .text:0000002c stop
+                   .debug_aranges:0000000c $d
+
+NO UNDEFINED SYMBOLS

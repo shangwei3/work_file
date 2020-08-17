@@ -1,0 +1,83 @@
+ARM GAS  led.s 			page 1
+
+
+   1              	.global _start
+   2              	
+   3              	.equ GPX2CON , 0x11000C40 @//
+   4              	.equ GPX2DAT , 0x11000C44 @//
+   5              	_start:
+   6              	     @//设置对应的引脚为输出
+   7 0000 64009FE5 		 ldr r0,=GPX2CON
+   8 0004 001090E5 		 ldr r1,[r0] @//读
+   9              		 
+  10 0008 0F20A0E3 		 mov r2,#0xf @//修改
+  11 000c 021EC1E1 	     bic r1,r1,r2,lsl #28
+  12 0010 0130A0E3 		 mov r3,#0x1
+  13 0014 031E81E1 	     orr r1,r1,r3,lsl #28
+  14              	                 @//写
+  15 0018 001080E5 		 str r1,[r0]
+  16              	    
+  17              	    
+  18              	while:	
+  19              	  	 @//输出指定的电平
+  20              	     @//关
+  21 001c 4C009FE5 		 ldr r0,=GPX2DAT
+  22 0020 001090E5 		 ldr r1,[r0]
+  23 0024 0120A0E3 		 mov r2,#0x1 @//修改
+  24 0028 8213C1E1 	     bic r1,r1,r2,lsl #7
+  25              		 @mov r3,#0x1
+  26              	     @orr r1,r1,r3,lsl #28
+  27              	                 @//写
+  28 002c 001080E5 		 str r1,[r0]
+  29              		 
+  30              		 @//延时
+  31 0030 090000EB 		 bl delays
+  32              		 @//开
+  33 0034 34009FE5 		 ldr r0,=GPX2DAT
+  34 0038 001090E5 		 ldr r1,[r0]
+  35 003c 0120A0E3 		 mov r2,#0x1 @//修改
+  36 0040 8213C1E1 	     bic r1,r1,r2,lsl #7
+  37 0044 0130A0E3 		 mov r3,#0x1
+  38 0048 831381E1 	     orr r1,r1,r3,lsl #7
+  39              	                 @//写
+  40 004c 001080E5 		 str r1,[r0]
+  41              	
+  42              	     @//延时
+  43 0050 010000EB 	      bl delays
+  44 0054 F0FFFFEA 	      b while     
+  45              	
+  46              	
+  47              	stop:
+  48 0058 FEFFFFEA 	     b stop
+  49              		 
+  50              	delays:
+  51 005c 10409FE5 	    ldr r4,=100000000
+  52              	loop:	
+  53 0060 014054E2 		subs r4,#1
+  54 0064 FDFFFF1A 		bne loop 
+  55 0068 0EF0A0E1 		mov pc,lr @//回到之前的跳转位置
+  55      400C0011 
+  55      440C0011 
+ARM GAS  led.s 			page 2
+
+
+  55      00E1F505 
+ARM GAS  led.s 			page 3
+
+
+DEFINED SYMBOLS
+                            *ABS*:000001ce __GCC_VERSION
+                            *ABS*:00000001 __GCC
+                            *ABS*:00000208 __UVISION_VERSION
+               led.s:5      .text:00000000 _start
+               led.s:3      *ABS*:11000c40 GPX2CON
+               led.s:4      *ABS*:11000c44 GPX2DAT
+               led.s:7      .text:00000000 $a
+               led.s:18     .text:0000001c while
+               led.s:50     .text:0000005c delays
+               led.s:47     .text:00000058 stop
+               led.s:52     .text:00000060 loop
+               led.s:55     .text:0000006c $d
+                   .debug_aranges:0000000c $d
+
+NO UNDEFINED SYMBOLS

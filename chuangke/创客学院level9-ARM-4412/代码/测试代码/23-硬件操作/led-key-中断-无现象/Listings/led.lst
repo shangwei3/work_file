@@ -1,0 +1,107 @@
+ARM GAS  led.s 			page 1
+
+
+   1              	.global _start
+   2              	
+   3              	_start:
+   4              	@//(1)实现中断向量表
+   5              	@//(2)实现reset 异常
+   6              	@// a.告诉arm 核 中断异常向量表的位置
+   7              	@// b.允许中断(irq)
+   8              	@// c.设置栈顶指针 跳转到main函数
+   9              	@//(3)实现irq   异常
+  10              	@// a.调整一下 返回地址
+  11              	@// b.保护现场(压栈)
+  12              	@// c.bl irq ---->执行中断服务程序
+  13              	@// d.中断执行完成，恢复现场
+  14 0000 0D0000EA 	  b reset
+  15 0004 14F09FE5 	  ldr pc,_undefined_instruction
+  16 0008 14F09FE5 	  ldr pc,_software_interrupt
+  17 000c 14F09FE5 	  ldr pc,_prefetch_abort
+  18 0010 14F09FE5 	  ldr pc,_data_abort
+  19 0014 14F09FE5 	  ldr pc,_not_used
+  20 0018 14F09FE5 	  ldr pc,_irq
+  21 001c 14F09FE5 	  ldr pc,_fiq @// 1.优先级 2,私有寄存器 3.向量表中的位置
+  22              	  
+  23              	_undefined_instruction:
+  24 0020 20000000 	    .word _undefined_instruction
+  25              	_software_interrupt:
+  26 0024 24000000 	    .word _software_interrupt
+  27              	_prefetch_abort:
+  28 0028 28000000 	    .word _prefetch_abort 
+  29              	_data_abort:
+  30 002c 2C000000 	    .word _data_abort
+  31              	_not_used:
+  32 0030 30000000 	    .word _not_used
+  33              	_irq:
+  34 0034 5C000000 	    .word irq_handler
+  35              	_fiq:
+  36 0038 38000000 	    .word _fiq	
+  37              	  
+  38              	
+  39              	reset:
+  40              	@//(2)实现reset 异常
+  41              	@// a.告诉arm 核 中断异常向量表的位置
+  42              	@// b.允许中断(irq)
+  43              	@// c.设置栈顶指针 跳转到main函数
+  44              	@//(3)实现irq   异常
+  45 003c 30009FE5 	   ldr r0,=_start
+  46 0040 100F0CEE 	   mcr p15,0,r0,c12,c0,0
+  47              	   
+  48 0044 00000FE1 	   mrs r0,cpsr
+  49 0048 0110A0E3 	   mov r1,#1
+  50 004c 8103C0E1 	   bic r0,r1,lsl #7
+  51 0050 00F029E1 	   msr cpsr,r0
+  52              	   
+  53 0054 1CD09FE5 	   ldr sp,=0x02060000 
+  54 0058 FEFFFFEB 	   bl main
+  55              	   
+  56              	irq_handler:
+  57              	
+ARM GAS  led.s 			page 2
+
+
+  58 005c 04E04EE2 	    sub lr,#4
+  59              		
+  60 0060 14D09FE5 		ldr sp,=0x02059000
+  61              		
+  62 0064 FF5F2DE9 		stmfd sp!,{r0-r12,lr}
+  63              		
+  64 0068 FEFFFFEB 		bl do_irq @//中断处理程序
+  65              		
+  66 006c FF9FFDE8 		ldmfd sp!,{r0-r12,pc}^
+  67              		
+  68              	    
+  69              	stop:
+  70 0070 FEFFFFEA 	     b stop
+  71              		 
+  72 0074 00000000 	
+  72      00000602 
+  72      00900502 
+ARM GAS  led.s 			page 3
+
+
+DEFINED SYMBOLS
+                            *ABS*:000001ce __GCC_VERSION
+                            *ABS*:00000001 __GCC
+                            *ABS*:00000208 __UVISION_VERSION
+               led.s:3      .text:00000000 _start
+               led.s:39     .text:0000003c reset
+               led.s:14     .text:00000000 $a
+               led.s:23     .text:00000020 _undefined_instruction
+               led.s:25     .text:00000024 _software_interrupt
+               led.s:27     .text:00000028 _prefetch_abort
+               led.s:29     .text:0000002c _data_abort
+               led.s:31     .text:00000030 _not_used
+               led.s:33     .text:00000034 _irq
+               led.s:35     .text:00000038 _fiq
+               led.s:24     .text:00000020 $d
+               led.s:56     .text:0000005c irq_handler
+               led.s:45     .text:0000003c $a
+               led.s:69     .text:00000070 stop
+               led.s:72     .text:00000074 $d
+                   .debug_aranges:0000000c $d
+
+UNDEFINED SYMBOLS
+main
+do_irq
