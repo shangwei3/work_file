@@ -1,0 +1,21 @@
+struct led_device
+{
+	...
+	struct cdev cdev;
+	....
+};
+
+
+pled = kmalloc(sizeof(struct led_device));
+
+
+
+err = cdev_add(&pled->cdev,pled->devno, 1);
+
+
+-------------------------------------------------
+
+struct inode 的i_cdev成员记录了cdev结构体的首地址
+
+问:如果我知道结构体中的某一个成员地址，是否就可以知道这个结构体的首地址?
+答:可以，将成员地址 - 成员在结构体中的偏移量   就可以算出结构体的首地址

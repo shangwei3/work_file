@@ -1,0 +1,24 @@
+config HELLO1
+	tristate
+	prompt "Hello1 y support"
+	default y 
+
+config HELLO2
+	tristate
+	prompt "Hello2 m support"
+	default m
+
+config HELLO3
+	tristate 
+	prompt "hello3 n support"
+	default n
+
+config HELLO4
+	bool
+	prompt "hello4 n support"
+	default n
+
+config HELLO5
+	bool
+	prompt "hello5 n support"
+	default y

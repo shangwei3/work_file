@@ -1,0 +1,3 @@
+target remote localhost:3333
+monitor halt reset
+monitor mww 0x10110000 0

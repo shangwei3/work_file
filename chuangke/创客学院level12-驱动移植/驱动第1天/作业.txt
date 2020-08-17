@@ -1,0 +1,46 @@
+晚间练习: LED驱动编写
+
+GPX2CON    Address = 0x11000C40 
+GPX2DAT    Address = 0x11000C44 
+
+手册上查询的地址是实际物理地址，操作系统使用虚拟地址,所以我们需要将物理地址做个映射.
+
+#include <asm/io.h>
+
+void * ioremap(unsigned long phy_addr,int size)
+功能:将物理地址与虚拟地址映射
+参数:
+@phy_addr 物理地址  
+@size     映射大小
+返回:
+返回映射后的虚拟地址
+
+static inline u32  readl(const volatile void  __iomem *addr)
+{
+	return  *(const volatile u32 __force *) addr;
+}
+功能:从一个地址中读取四个字节
+
+
+static inline void  writel(u32 b, volatile void __iomem *addr)
+{
+	*(volatile u32 __force *) addr = b;
+}
+ 
+功能:向一个地址中写四个字节
+
+
+例如:将GPX2CON寄存器设置IO工作模式为输出模式
+
+//读值
+reg_value = real(pled->reg);
+//修改
+reg_value &= ~(0xf << 28);
+reg_value |=  (0x1 << 28);
+//写值
+writel(reg_value,pled->reg);
+
+
+	
+注意:
+此时KERNEL_BUILD是开发板Linux内核源码树的路径

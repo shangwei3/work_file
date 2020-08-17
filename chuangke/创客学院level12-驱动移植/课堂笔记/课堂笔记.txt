@@ -1,0 +1,186 @@
+一 Linux 驱动(面向对象)
+
+1.Linux 驱动框架
+
+思想:写驱动的时候，只提供操作硬件设备的函数接口
+
+文件存放磁盘: open ,read ,write ,close
+
+ARM  exynos4412  origen(母板)
+
+裸机驱动:(硬件操作 + 功能需求)
+
+AD/I2C/UART/PWM(Timer + OUT)/LED/KEY (阅读原理图，芯片手册，编码控制硬件)
+
+
+2.Linux 硬件子系统
+
+
+3.动手编写驱动(学习)
+  实际工作的时候，更多调试
+  
+
+4.学习方法
+	[1]内核提供的函数接口(熟悉),参照别人的写法，来编写自己
+	[2]思想认识(灌输)
+	[3]动手(一点一点加)
+	[4]思考
+	
+	
+二 Linux 底层课程
+
+1.系统移植(bootloader , Linux kernel , device tree , fs)
+2.驱动编写
+
+
+三 Linux 模块编程
+
+<1>头文件
+#include <linux/init.h>
+#include <linux/module.h>
+
+<2>许可权限GPL
+
+MODULE_LICENSE("GPL");
+
+
+<3>模块入口函数
+int  xxx_init(void)
+{
+		....
+		return 0;
+}
+
+<4>模块出口函数
+void xxx_exit(void)
+{
+	 ....
+}
+
+<5>模块入口
+module_init(xxx_init);
+
+<6>模块出口
+module_exit(xxx_exit);
+
+
+四 LED驱动---模块化编程
+
+1.阅读原理图
+2.查看datasheet
+3.编写模块
+4.编译模块
+思想:
+		 Linux 内核源码的编译系统可以编译我们编写的模块代码
+		 
+		 第一种(产品发布):
+		 			 将自己编写的代码，拷贝到Linux内核源码树下，然后配置编译,编译进内核
+		 			
+		 第二种(驱动调试):
+		 			 自己编写Makefile,然后使用Linux内核的编译系统，编译自己的模块代码
+		 			 
+		 			 
+		 问:Linux内核的编译系统在哪里?
+		 答:
+		 	 <1>Linux内核源码下的Makefile
+		 	 	  注意:
+		 	 	  你的Linux内核源码必须已经根据自己所开发的平台进行了配置
+		 	 	  [1]修改了Makefile,指定了开发工具链
+		 	 	  [2]已经使用Linux内核默认配置文件进行了配置
+		 	 	  
+		 	 	  
+		 	 <2>ubuntu系统自带的Linux内核编译系统(pc机，x86)
+		 	    /lib/modules/3.13.0-32-generic/build/Makefile
+		 	    
+		 	    
+		 问:如何在自己编写的Makefile中使用Linux内核的编译系统
+		 答:make  -C  linux内核编译系统的路径  M=需要编译的模块代码路径  modules
+		 
+		 ifeq ($(KERNELRELEASE),)
+		 KERNEL_BUILD = /lib/modules/$(shell uname -r)/build
+		 MODULE_PATH := $(shell pwd)
+		 module:
+		 			 $(MAKE) -C $(KERNEL_BUILD) M=$(MODULE_PATH) modules
+		 clean:
+					$(MAKE) -C $(KERNEL_BUILD) M=$(MODULE_PATH) clean
+		 else
+		 		 obj-m = led-driver.o
+		 endif
+		 
+		 
+5.模块操作
+	insmod  加载模块  ---->  模块入口函数
+	rmmod   卸载模块  ---->  模块出口函数
+	lsmod   查看系统中的模块
+  modinfo led-driver.ko 查看模块包含的信息
+  
+  注意:
+  查看内核空间printk打印的信息:dmesg
+  
+
+五  LED驱动----字符设备驱动注册
+
+1.应用层的进程如何访问底层的驱动程序
+  字符设备或块设备，我们可以通过设备文件来找到底层驱动程序
+  
+------------------------------------------------------------------------
+驱动的标识：设备号
+
+12bit(主设备号) + 20bit(次设备号) = 32bit
+
+主设备号:标识一类设备
+次设备号:为了区分同类型设备的不同设备
+
+------------------------------------------------------------------------
+
+问:Linux内核有那么多驱动程序，如何才能确定自己需要访问的驱动程序?
+答:通过设备文件中包含的设备号信息 
+
+问:Linux内核中，如何描述文件?
+答:<1>struct inode 描述文件属性信息(文件类型，权限，大小，修改时间，设备号[设备文件])
+	 <2>struct file  描述一个打开的文件(打开的方式，文件偏移量,...)
+	   [注意:只要打开一次文件，就会分配一次]
+	   
+
+问:应用层访问底层字符设备驱动的过程?
+答:open---->设备文件
+							 struct inode:设备号
+							 				--------->struct cdev:记录操作硬件设备的函数接口
+							 				
+	 
+	 寻找成功之后:
+	 struct inode 结构体记录struct cdev这个结构体首地址
+	 struct file  结构体记录struct file_operations这个结构体首地址
+
+问:写字符驱动，需要做什么?
+答:<1>struct cdev:Linux 针对字符设备的通用描述
+		  
+		  struct  led_device
+		  {
+		  		struct cdev cdev;//通用的字符设备描述
+		  		....
+		  };
+		  
+		  需要给自己设计的结构体分配空间
+		  
+	 <2>提供硬件设备的操作函数接口
+	 	  struct file_operations 结构体做填充
+	 	  
+	 	  需要将这个结构体的首地址记录在struct cdev结构体中
+	 	  
+	 	  
+	 <3>申请一个空闲的设备号
+	 
+	 <4>使用设备号，将struct cdev这个结构体添加到系统中去 
+	 	  	  
+		  
+-------------------------------------------------------------------
+mknod  设备文件名  设备文件类型  主设备号  次设备号
+
+mknod   /dev/led     c            250         0
+-------------------------------------------------------------------
+		  
+		  
+	 	
+							 					 												  
+	   

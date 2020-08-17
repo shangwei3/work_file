@@ -1,0 +1,44 @@
+.global _start
+
+_start:
+	   bl main
+
+ /*
+ .equ GPX2CON,0x11000c40
+.equ GPX2DAT,0x11000c44
+.equ GPX1CON,0x11000c20
+.equ GPX1DAT,0x11000c24
+		LDR R0,=GPX2CON
+		LDR R1,[R0]
+		MOV R2,#0XF
+		BIC R1,R1,R2,LSL#28
+		MOV R2,#1
+		ORR R1,R1,R2,LSL#28
+		STR R1,[R0]
+
+		LDR R0,=GPX2DAT
+		LDR R1,[R0]
+		MOV R2,#1
+		BIC R1,R1,R2,LSL#7
+		MOV R2,#1
+		ORR R1,R1,R2,LSL#7
+		STR R1,[R0]
+ @
+		LDR R0,=GPX1CON
+		LDR R1,[R0]
+		MOV R2,#0XF
+		BIC R1,R1,R2
+		MOV R2,#1
+		ORR R1,R1,R2
+		STR R1,[R0]
+
+		LDR R0,=GPX1DAT
+		LDR R1,[R0]
+		MOV R2,#1
+		BIC R1,R1,R2
+		MOV R2,#1
+		ORR R1,R1,R2
+		STR R1,[R0]*/
+
+MAIN_LOOP:
+		B MAIN_LOOP

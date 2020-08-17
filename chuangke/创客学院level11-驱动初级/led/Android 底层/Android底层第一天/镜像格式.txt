@@ -1,0 +1,1 @@
+ bootloader.fex + boot.img(kernel + ramdisk.img) + system.img + recovery.img = lichee/tools/pack/sun8iw3p1_android_fspad-733_card0.img)

@@ -1,0 +1,209 @@
+一 Linux 内核目录结构 
+
+(1)arch 目录 :存放架构相关的代码
+   arch/arm/boot/compressed    存放的是内核的自解压代码
+   arch/arm/kernel/head.S      Linux 内核的开始代码 
+   
+   arch/arm/boot/dts  存放的是开发板相关的设备树文件 
+   arch/arm/configs   存放的SOC芯片相关的内核配置文件 
+
+(2)driver 目录: 设备驱动代码 
+
+(3)net    目录: 网络协议栈的实现代码
+ 
+(4)Makefile 文件  (指定平台信息和交叉开发工具链)
+
+
+二 针对自己的开发板配置Linux内核 
+
+1.修改Makefile 
+
+ARCH		?= arm
+CROSS_COMPILE	?= arm-none-linux-gnueabi-
+
+2.使用默认配置文件配置内核 
+make  默认配置文件 
+
+例如:
+make  exynos_defconfig(推荐)  (cp  arch/arm/configs/exynos_defconfig  .config)
+
+3.通过配置菜单配置内核
+make  menuconfig 
+
+y:选中编译进行内核  n:不编译进行内核  m:编译成模块(代码会编译，但是不会连接到内核里面去)
+
+需要确认信息:
+(1)System type 
+	[1]确认编译的内核是否是自己需要的
+	[2]输出信息的串口  
+
+注意:
+修改之后的配置需要保存 
+
+4.编译Linux 内核
+	make  
+
+(1)vmlinux (60M) (elf linux内核镜像)(存放在Linux内核的顶层目录)
+(2)Image   (5.5M)   (去掉elf头和调试信息之后的Linux内核镜像) arch/arm/boot
+(3)vmlinux (3.0M)  (elf linux内核镜像 : 自解压代码 + gzip压缩后的内核镜像)
+	        				 (arch/arm/boot/compressed  )
+	        				 
+(4)zImage   (去掉elf头之后的Linux内核镜像 : 自解压代码 + gzip压缩后的内核镜像) arch/arm/boot
+
+arch/arm/boot: (2),(4)  
+
+-----------------------------------------------------------------------------------------------
+
+5.生成uImage格式Linux内核镜像
+  make uImage 
+
+注意:
+在编译的时候，会提示mkimage找不到。我们可以从编译过的uboot源码目录的
+tools目录下找到mkimage工具，然后将它拷贝到/usr/bin目录下 
+
+命令:
+	mkimage -l uImage =>读取uImage头的信息(判断uImage应该加载到内存的那个地址运行)
+	
+	
+	bootm  0x4100,0000(ram_addr)   
+	
+	uImage => head + zImage
+	
+	头中记录的信息:
+	Load Address: 40008000 (期望加载的地址)
+	Entry Point:  40008000  / 40008040
+	
+	<1>从这个地址中读取了64byte头信息
+	<2>发现ram_addr 和 load_addr 不相等，此时会将41000000偏移64字节之后的zImage搬移到
+		 load address,然后将pc指向enty_point 	 
+		
+		 
+	bootm  0x40008000(ram_addr)
+	uImage => head + zImage
+	
+	<1>从这个地址中读取64byte信息
+	<2>发现ram_addr和load_addr 相等,此时会将pc指针指向entry point。
+		 此时完蛋，因为0x40008000开始部分是64byte头信息数据，应该将pc指向 0x40008000 + 64byte头信息 
+	
+	总结:
+	如果uImage头信息中load address 和 enty point相等，此时uImage不能加载到load address地址运行
+	如果uImage头信息中load address 和 enty point不相等(偏移64byte),此时只能将uImage加载到load address
+	运行。	 
+	 
+通过NFS挂载文件系统失败:
+[    1.435000] VFS: Cannot open root device "nfs" or unknown-block(0,255): error -6
+[    1.440000] Please append a correct "root=" boot option; here are the available partitions:
+[    1.445000] Kernel panic - not syncing: VFS: Unable to mount root fs on unknown-block(0,255)
+
+可能原因:
+(1)没有网卡驱动,此时没有办法通过网络的方式挂载文件系统
+(2)虽然是通过nfs服务挂载文件，也有网卡驱动，但是可能主机端的NFS服务有问题
+   [1]可能是开发板的IP地址和主机的IP地址不是同一个网段
+   [2]可能是主机端提供的共享目录路径，不是开发板所期望的
+   [3]可能主机端NFS服务死掉,此时重新启动主机端的NFS服务
+	
+
+三 Kconfig和Makefile 
+
+1.Makefile : 完成对文件或目录编译
+
+基本语法
+[1]obj-y += dir/ 或 obj-y += file.o
+   表示对应目录需要编译进内核或指定的文件需要编译进内核
+
+[2]obj-$(CONFIG_XXX) += dir/ 或 obj-$(CONFIG_XXX) += file.o 	
+   表示对应目录或文件是否需要编译进内核，取决于CONFIG_XXX宏的定义,也就是在.config中是否有这个
+   宏的定义:
+   CONFIG_XXX=y
+	 
+	 问题:.config 是什么文件呢?
+	 回答:内核的配置文件
+	
+2.Kconfig : 提供内核的配置菜单选项
+
+配置选项
+
+config 选项名
+	属性1
+	属性2 
+	...
+
+[1]选项名 
+config HELLO
+
+展现的形式:CONFIG_HELLO,在.config文件中定义 
+
+[2]属性 
+	(1)选择类型
+		<1>tristate(三态)   y:编译进内核  m:编译成模块  n:不编译   < >
+	  <2>bool       y:编译进内核  n:不编译   [ ]
+	                       
+		<3>string     CONFIG_选项名="字符串"
+		<4>int        CONFIG_选项名=整数 
+		<5>hex        CONFIG_选项名=十六进制数
+	
+	
+	(2)提示字符串
+	   prompt "提示字符串" (配置菜单中显示)
+
+	(3)range  指定值的范围
+
+	(4)help   帮助信息
+	help 
+	  "test help ..."
+ 
+	(5)default  当没有进行配置的时候，默认的选择是什么
+	例如:
+	config HELLO 
+		tristate 
+		prompt "hello support"
+		default y 
+		
+
+	(6)depends   on 配置选项名 
+	  [1]depends on 配置选项名 
+	  [2]depends on 配置选项名1(m) || 配置选项名2(y) 
+	  [3]depends on 配置选项名1(y) && 配置选项名3(m)
+	  
+	  y:2  m:1  n:0
+	  && -> 最小值
+	  || -> 最大值
+
+	  注意:如果依赖的结果为0:不可见,  2:三态 , 1:两态
+	
+	(7)select  配置选项名
+	  当前配置选项被选中的时候，同时选择select 指定的配置型选项
+	  
+ （8）source  路径/Kconfig
+      将这个路径下的Kconfig文件包含进来 
+	
+
+注意:(1)和(2)必须有，其它可选择
+
+练习:
+编写一个Kconfig,配置选项为:
+TEST1 ->三态,默认为y
+TEST2 ->二态,默认为N
+TEST3 ->string ,值为"Hello Linux" 
+TEST4 ->int,    范围为[100-200]
+
+
+四 如何在Linux 内核中添加自己的代码
+
+(1)把自己的代码拷贝到内核源码树下
+(2)编写一个自己的Makefile和 Kconfig  
+  (如果目录下已经有Makefile和Kconfig文件，则直接修改他们)
+	 Makefile:
+	 obj-$(CONFIG_XXX) += file.o
+	 
+	 Kconfig:
+	 config XXX
+	 		tristate "....."
+	 		
+	 注意:如果是直接修改Makefile和Kconfig，则不需要第三步 
+	 		
+(3)在它的上一层目录下，修改Makefile和Kconfig (可选)
+(4)make menuconfig  
+	 选中我们的配置选项
+	 
+(5)重新编译内核	 		

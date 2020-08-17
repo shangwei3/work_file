@@ -1,0 +1,86 @@
+<html>
+<body>
+<pre>
+<h1>µVision Build Log</h1>
+<h2>Project:</h2>
+I:\ARM-Keil\led\led.uvproj
+Project File Date:  08/31/2016
+
+<h2>Output:</h2>
+Build target 'Target 1'
+User command #1: make clean
+make: Interrupt/Exception caught (code = 0xc00000fd, addr = 0x425073)
+compiling main.c...
+assembling start.S...
+linking...
+User command #1: make
+arm-none-eabi-gcc -g -c -O0 start.S -o start.o
+arm-none-eabi-gcc -g -c -O0 main.c  -o main.o
+arm-none-eabi-ld start.o main.o -Ttext 0x40008000 -o start.elf
+arm-none-eabi-objcopy -O binary start.elf start.bin
+make: Interrupt/Exception caught (code = 0xc00000fd, addr = 0x425073)
+"led.elf" - 0 Error(s), 0 Warning(s).
+Build target 'Target 1'
+User command #1: make clean
+make: Interrupt/Exception caught (code = 0xc00000fd, addr = 0x425073)
+compiling main.c...
+assembling start.S...
+linking...
+User command #1: make
+arm-none-eabi-gcc -g -c -O0 start.S -o start.o
+arm-none-eabi-gcc -g -c -O0 main.c  -o main.o
+arm-none-eabi-ld start.o main.o -Ttext 0x40008000 -o start.elf
+arm-none-eabi-objcopy -O binary start.elf start.bin
+make: Interrupt/Exception caught (code = 0xc00000fd, addr = 0x425073)
+"led.elf" - 0 Error(s), 0 Warning(s).
+Build target 'Target 1'
+User command #1: make clean
+make: Interrupt/Exception caught (code = 0xc00000fd, addr = 0x425073)
+compiling main.c...
+assembling start.S...
+start.S: Assembler messages:
+start.S(0): warning: end of file not at end of a line; newline inserted
+linking...
+start.o: In function `delay1s':
+I:\ARM-Keil\led/start.S:48: undefined reference to `main'
+collect2: ld returned 1 exit status
+Target not created
+Build target 'Target 1'
+User command #1: make clean
+make: Interrupt/Exception caught (code = 0xc00000fd, addr = 0x425073)
+compiling main.c...
+assembling start.S...
+linking...
+User command #1: make
+arm-none-eabi-gcc -g -c -O0 start.S -o start.o
+arm-none-eabi-gcc -g -c -O0 main.c  -o main.o
+arm-none-eabi-ld start.o main.o -Ttext 0x40008000 -o start.elf
+arm-none-eabi-objcopy -O binary start.elf start.bin
+make: Interrupt/Exception caught (code = 0xc00000fd, addr = 0x425073)
+"led.elf" - 0 Error(s), 0 Warning(s).
+Build target 'Target 1'
+User command #1: make clean
+make: Interrupt/Exception caught (code = 0xc00000fd, addr = 0x425073)
+compiling main.c...
+assembling start.S...
+linking...
+User command #1: make
+arm-none-eabi-gcc -g -c -O0 start.S -o start.o
+arm-none-eabi-gcc -g -c -O0 main.c  -o main.o
+arm-none-eabi-ld start.o main.o -Ttext 0x40008000 -o start.elf
+arm-none-eabi-objcopy -O binary start.elf start.bin
+make: Interrupt/Exception caught (code = 0xc00000fd, addr = 0x425073)
+"led.elf" - 0 Error(s), 0 Warning(s).
+Build target 'Target 1'
+User command #1: make clean
+make: Interrupt/Exception caught (code = 0xc00000fd, addr = 0x425073)
+compiling main.c...
+assembling start.S...
+linking...
+User command #1: make
+arm-none-eabi-gcc -g -c -O0 start.S -o start.o
+arm-none-eabi-gcc -g -c -O0 main.c  -o main.o
+arm-none-eabi-ld start.o main.o -Ttext 0x40008000 -o start.elf
+arm-none-eabi-objcopy -O binary start.elf start.bin
+make: Interrupt/Exception caught (code = 0xc00000fd, addr = 0x425073)
+"led.elf" - 0 Error(s), 0 Warning(s).

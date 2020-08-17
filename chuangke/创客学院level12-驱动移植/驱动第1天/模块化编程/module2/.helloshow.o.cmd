@@ -1,0 +1,1 @@
+cmd_/home/cyg/workdir/s5pc100/driver/module/module2/helloshow.o := ld -m elf_x86_64   -r -o /home/cyg/workdir/s5pc100/driver/module/module2/helloshow.o /home/cyg/workdir/s5pc100/driver/module/module2/hello.o /home/cyg/workdir/s5pc100/driver/module/module2/show.o 

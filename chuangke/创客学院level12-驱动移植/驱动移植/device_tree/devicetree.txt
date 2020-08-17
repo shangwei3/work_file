@@ -1,0 +1,449 @@
+1.问:设备树是什么东东?
+	答:它是一个文件，这个文件描述的是设备的信息
+		
+2.问:为什么要引入设备树?
+	答:因为设备的信息是针对于特定平台的，如果我们在Linux内核中包含太多设备信息，则Linux内核移植
+		 性就会变差。引入设备树之后，设备的信息的描述不在是以代码的形式存在于Linux内核源代码中,这种
+		 做法实际上是将设备的信息，从Linux 内核中独立出来，单独描述(用设备树语法规则来描述设备的信息)。
+		 	
+3.问:设备的信息是以设备树的形式呈现，那么Linux操作系统是如何识别设备的呢?
+  答:Linux内核在启动的时候，要求把设备树文件传递给它。它拿到设备树之后，会解析设备树文件，从而
+  	 识别设备信息。
+  	 
+  	 
+用设备树的节点描述一个设备的信息
+
+/************************初始设备树***********************************************************
+ *Device tree是一种简单的节点和属性的树形结构。属性是键值对(属性名=值),而节点可能
+ *包括属性和子节点。
+ * 
+ * 根节点 
+ * / {
+ *	   子节点	
+ *     node1{            
+ *		a-string-propery="A string";
+ *		a-string-list-propery = "first string","second string";
+ *		a-byte-data-propery=[0x01 0x23 0x34 0x56];
+ *		child-node1 {
+ *			first-child-propery=<1>;
+ *			second-child-propery=<1>;
+ *			a-string-propery="Hello,world";
+ *		};
+ *
+ *		child-node2{
+ *		
+ *		};
+ *
+ *    };
+ *	 
+ *    node2{
+ *     an-empyt-propery;
+ *	   a-cell-propery = <1 2 3 4>;each number (cell) is a uint32
+ *  	  child-node1{
+ *	   };    
+ *    };
+ * }
+ * 
+ *解释
+ *(1)一个单独的根节点 : "/"
+ *(2)两个子节点       : "node1" 和 "node2"
+ *(3)node1的子节点: "child-node1" 和 "child-node2"
+ *(4)一堆分散在树里的属性
+ *
+ *
+ *--------------------------------------------------------------------------------
+ *属性是最简单的键-值对，它的值可以为空或者是一个有效的数据,基本的数据类型如下
+ *(1)属性后面的值可以是一个字符串，如:
+ *   a string-propery = "a string"
+ *
+ *(2)属性后面的值可以是多个32位的无符号整数,用尖括号限定
+ *   cell-propery = <0xbeef 123 0xabcd1234>
+ *
+ *(3)属性后面的值可以多个二进制数据，用方括号限定
+ *   binary-propery = [0x01 0x23 0x45 0x67] 
+ *   注意:写的时候用十六进制来表示二进制
+ *
+ *(4)属性后面的值可以是多个不同形式的数据组合在一起，他们之间用逗号隔开
+ *  mixed-propery = "a string",[0x01 0x23 0x45 0x67],<0x12345678>
+ *
+ *(5)属性后面的值可以多个字符传，他们之间用逗号隔开
+ *  string-list = "red fish","blue fish";
+ *----------------------------------------------------------------------------------------------------
+ *
+ *常见的属性说明:
+ *
+ *(1)#address-cells = <1个或多个uint32整数>
+ *   #可以理解为多少个,cell可以理解为uint32整数，所以它表示地址用多少个uint32位整数表示   
+ *
+ *   #size-cells    = <1个或多个uint32整数>
+ *   所以它表示长度用多少个uint32位整数表示
+ *
+ *   reg            = <address1 length1 [address2 length2] [address3 length3]...>中括号部分表示可选
+ *   每个可编址设备都有一个元组列表的reg,元组的形式为:reg = <地址1 长度1 [地址2 长度2] ...>。
+ *   每个元组都表示一个该设备使用的地址范围。每个地址值或长度可以是一个或多个32位整数列表。
+ *   
+ *   由于地址和长度字段都是可变大小的，那么父节点的#address-cells和#size-cells属性就是用来声明子节点
+ *   reg属性中地址值和长度的数量。换句话说，正确解释一个reg属性需要用到父节点的#address-cells和#size-cells值 
+ *
+ *   举例说明:
+ *  
+ *   cpus{
+ *		#address-cells = <1>;
+ *      #size-cells    = <0>;
+
+ *      cpu@0{
+ *			compatible="arm,cortex-a9";
+ *			reg=<0>;
+ *       };
+ *       cpu@1{
+ *	 		compatible="arm,cortex-a9";
+ *			reg=<1>;
+ *		};
+ *   };
+ *   在cpu节点中，#address-cells设置为1,#size-cells设置为0。这意味着字节点的reg值是一个单一的uint32,
+ *   这是一个不包含大小字段的地址，为这两个cpu分配的地址是0和1。cpu节点的#size-cells为0,是因为只
+ *   为每个cpu分配一个单独的地址。
+ *    
+ *   你可能还会注意到reg的值和节点名字是相同的。按照惯例，如果一个节点有reg属性，那么该节点的名字
+ *   就必须包含设备地址，这个设备地址就是reg属性里第一个地址值。
+ *  
+ *  /{
+ *      #address-cells = <1>;
+ *      #size-cells    = <1>;
+ *      ...
+ *      serial@101f0000{
+ *			compatible = "arm,pl1011";
+ *      	reg        = <0x101f0000 0x1000>;
+ *      };
+
+ *      led@11000c40{
+ 			reg   =   <0x11000c40  0x8>
+ *      };
+ *      
+ *      serial@101f2000{
+ *          compatible = "arm,pl1011";
+ *      	reg        = <0x101f2000 0x1000>;
+ *       };
+ *       
+ *       gpio@101f3000{
+ *       	compatible = "arm,pl061";
+ *      	reg        = <0x101f3000 0x1000 
+ *		                  0x101f4000 0x0010>;
+ *       };
+ *       
+ *       interrupt-controller@10140000{
+ *    
+ * 			compatible = "arm,pl190";
+ *           reg        = <0x1040000 0x1000>;
+ *        };
+ *   }; 
+ *
+ * (2)chosen node 
+ *    chosen节点并不代表一个真正的设备,只是作为bootloader和操作系统传递参数的地方。
+ *    例如:
+ *    chosen{
+ *     bootargs = "root=/dev/nfs rw nfsroot=192.168.1.100:/home/linux/rootfs console=ttySAC2,115200";
+ *    };
+ *
+ * (3)aliases node 
+ *    用来定义别名。由于Device
+ *    tree是树装结构，当引用一个node的时候需要指明相对于root node的full
+ *    path。例如:/node-name-1/node-name-2/node-name-N。如果多次引用，每次都要写这么复杂的字符串多少有些麻烦。
+ *    因此可以在aliases节点定义一些full path的缩写的设备节点。
+ *    例如:    
+ *     
+ *    aliases{
+ *    	i2c6 = &pca9546_i2c0;
+ *      i2c7 = &pca9546_i2c1;
+ *    };
+ *    表示i2c6为pca9546_i2c0的别名,当使用i2c6的时候，也就是使用pca9546_i2c0
+ *
+ *(4)memory node 
+ *   memory device
+ *   node是所有设备树文件的必备节点，它定义了系统物理内存的layout。device_type属性定义了该node的
+ *   设备类型，例如:cpu ,serial等。对于memory
+ *   node,其device_type必须等于memory。reg属性定义了访问该device_node的地址信息，该属性的值被解析
+ *   成任意长度的(address,size)数组，具体用多长的数据来表示address和size是在其parent  node中定义(#address-cells 和#size-cells)。
+ *
+ *   例如:在64位系统上,physical memory分成两段,定义如下:
+ * 
+ *   RAM :starting address 0x0,                   length 0x8000,0000   (2GB)
+ *   RAM :starting address 0x1,0000,0000          length 0x1,0000,0000 (4GB)
+ *
+ *   /{
+ *       #address-cells = <2>
+ *       #size-cells    = <2>
+ *      
+ *       memory@0{
+ *			reg = <0x00000000 0x00000000  0x00000000 0x80000000
+ *                 0x00000001 0x00000000  0x00000001 0x00000000>;
+ *       };
+ *   };
+ *
+ */
+
+/*************************************************中断描述*********************************************
+ * 中断控制器描述以及标准属性介绍
+ *
+ *  interrupt-parent = <&gic>;
+ *
+ *	gic: interrupt-controller@10490000 {
+ *		compatible = "arm,cortex-a9-gic";
+ *		#interrupt-cells = <3>;
+ *		interrupt-controller;
+ *		reg = <0x10490000 0x1000>, <0x10480000 0x100>;
+ *	};
+ *
+ *	amba {
+ *		#address-cells = <1>;
+ *		#size-cells = <1>;
+
+ *		compatible = "arm,amba-bus";
+ *		interrupt-parent = <&gic>;
+ *      ...
+ *  }
+ *
+ *   
+ *  节点的名字，当这个节点描述设备添加到platform总线上后，我们可以在/sys/bus/platform/devices目录下
+ *  可以看到以这个节点名命名的子目录,命名方式如下:
+ *  (1)如果节点中有reg属性，则以reg属性第一个值和节点名组合在一起命名
+ *  (2)如果节点中没有reg属性，则以这个节点名和这个设备在总线上的序号组合在一起命名
+ *     例如:这个设备是第二个加入platform总线上的，所以这个设备在总线上的序号为2 
+ *  serial@13800000 {
+ *		compatible = "samsung,exynos4210-uart";
+ *		reg = <0x13800000 0x100>;
+ *		interrupts = <0 52 0>;
+ *		clocks = <&clock 312>, <&clock 151>;
+ *		clock-names = "uart", "clk_uart_baud0";
+ *		status = "disabled";
+ *	};
+ *
+ *
+ *
+ *
+ *@interrupt-parent :指明这个节点的中使用的中断是属于哪个中断控制器的
+ *                    如果一个节点没有interrupt-parent属性，则这个节点中使用的中断属于root节点
+ *                    中指定的中断控制器
+ *
+ *@gic              :这个节点的标签名，我们可以在其他节点中使用这个标签引用标签标示的节点              
+ *                   如interrupt-parent = <&gic>   
+ *                
+ *                    
+ *@compatible       :兼容的设备,其实就是用来作为当前节点所描述的设备名称，这个名称需要和驱动程序
+ *                   那边要对应
+ *
+ *
+ *@interrupt-cells  :指明描述一个中断，需要用多少个uint32型数据表示
+ *                                        
+ *
+ *@interrupt-controller :表明当前节点是一个中断控制器节点
+ *
+ *
+ *@interrupts       :用来指定中断的信息          
+ *                   在串口这个节点中并没有指定interrupt-parent属性,所以串口中使用中断属于root节点
+ *                   中指定的中断控制器，即gic,而在gic中断控制器这个节点中,interrupt-cells的值为3,
+ *                   所以串口节点中使用的中断需要用3个uint32型整数来描述。具体这三个整数表示啥含义
+ *                   我们需要查阅相关的说明文档，Linux内核中设备树节点属性的说明文档，都存放在Linux
+ *                   内核源码树Documentation/devicetree/bindings目录。
+ *                   查阅Documentation/devicetree/bindings/arm/gic.txt文件，我们可以知道这里三个
+ *                   整数数据的含义如下
+ *                   <第一个整数> 0 for SPI interrupts,1 for PPI interrupts
+ *                   <第二个整数> 中断号(contains the interrupt number for the interrupt type)
+ *                   <第三个整数> 中断触发方式
+ *                                0 = 非电平触发(内部中断)
+ *                                1 = 上升沿触发 
+ *                                2 = 下降沿触发  
+ *                                4 = 高电平触发
+ *                                8 = 低电平触发
+ *
+ *                  如果是一个外部中断，则它是通过GPIO管脚的电平来触发中断的，此时指定中断的信息如下
+ *
+ 				    key_A{
+							 compatible 		 = "fs4412-key-A";
+	 						 interrupt-parent = <&gpx1>; //这个中断对应的管脚属于哪一个GPIO控制器控制
+	 						 interrupts       = <1 8>;  //第一个数字是管脚编号，第二个数字是中断触发方式
+	 						 interrupt-names  = "key-A-interrupt";
+							 status           = "okay";
+ 					};
+ *
+ *@clocks         :用来指定当前节点描述的这个设备使用的时钟信号由谁来提供,例如在串口节点中
+ *                 clocks = <&clock  312>, <&clock 151>
+ *
+ *                 这里&clock表示引用clock这个节点,clock标签表示的设备节点如下
+ *				   			 clock: clock-controller@10030000 {
+ *						           compatible = "samsung,exynos4412-clock";
+ *						           reg = <0x10030000 0x20000>;
+ *						           #clock-cells = <1>; //时钟信号信息用一个uint32整数来表示
+ *				         };
+ *                  
+ *                 这里"312"和"151"表示啥意思呢?  
+ *                 通过Documentation/bindings/clock/exynos4-clock.txt文件,我们可以知道在Linux操作系统中
+ *                 每个设备所需要的时钟源，都有一个ID。这里的两个数字，表明uart串口使用的时钟信号可以
+ *                 由ID:312 和 ID:151的时钟源提供
+ *                     
+ *@clock-names    :时钟源的命字，在驱动中我们可以根据设备节点指定的时钟源名字，通过Linux内核提供的API接口获得时钟信号
+ *
+ *
+ *
+ *@status         :指定当前设备的状态，其实用来说明当前设备是否需要添加到总线上
+ *                 (1)没有status属性的设备节点，表示这个设备节点描述的设备默认是添加到总线上的
+ *                 (2)status值为"okay","ok"时，表示这个设备需要添加到对应的总线上
+ *                 (3)status值为"disabled"时，表示这个设备不需要添加到对应的总线上
+ *
+ *
+ *
+ *注意:
+ *也可以在节点中根据自己的需要定义非标准的属性，非标准的属性需要程序员在驱动中自己去解析，标准的属性
+ *Linux内核在启动的时候，会自动进行解析 
+ *
+ */
+
+
+ /************************************************GPIO口相关的属性*********************************************
+		gpx1: gpx1 {
+			gpio-controller;
+			#gpio-cells = <2>;
+
+			interrupt-controller;
+			interrupt-parent = <&gic>;
+			interrupts = <0 24 0>, <0 25 0>, <0 26 0>, <0 27 0>,
+				     <0 28 0>, <0 29 0>, <0 30 0>, <0 31 0>;
+			#interrupt-cells = <2>;
+		};
+
+ *
+ *
+ *@gpio-controller  表明这个节点是一个gpio控制器
+ *@gpio-cells       表明当一个设备用gpio引脚时，需要用几个uint32整数描述它
+ *                  如: 
+ *                  cd-gpios = <&gpx0 7  0>  
+ *                  &gpx0表明这个节点描述的设备使用的gpio由gpx0这个标签表示的节点描述的gpio控制器控制
+ *                  7 表示是这一组的第几根线, 0表示这根线的标志(不同的场合有不同的含义，具体含义需要查阅相关文档)
+ *                 
+ *
+ *@pinctrl-0       控制设备的管脚，当Linux系统启动的时候解析设备树遇到这个属性的时候，
+ *                 会根据这个属性后面引用的标签找到对应的节点，然后根据节点中的描述，设置管脚的属性  
+ *                 例如:
+ *                 (1)管脚的功能
+ *                 (2)管脚的上拉与下拉功能是否使能
+ *                 (3)管脚的驱动能力
+ *
+ *
+ *@pinctrl-names   第一个名字对应pinctrl-0(第一个名字一般取为"default")  第二个名字对应pinctl-1 
+ *                 在驱动中我们使用devm_pinctrl_get_select(struct device *dev,const char *name )
+ *                 这样的函数，将我们的管脚设置为"default"状态,嗯，"default"对应我们的pinctl-0,
+ *                 pinctrl-0 指定的就是管脚的功能
+ *
+ *
+ 
+ gpio    输入   输出   中断
+ 
+ 
+ device_node{
+ 		pinctl-0 = <&input_lable>
+ 		pinctl-1 = <&output_label>
+ 		pinctl-2 = <&interrupt_lable>
+ 		
+ 		pinctrl-name = "default","output","interrupt"
+ };
+ 
+ 
+ devm_pinctrl_get_select("output");
+ 
+ 
+	i2c_1: i2c@13870000 {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		compatible = "samsung,s3c2440-i2c";
+		reg = <0x13870000 0x100>;
+		interrupts = <0 59 0>;
+		clocks = <&clock 318>;
+		clock-names = "i2c";
+		pinctrl-names = "default";
+		pinctrl-0 = <&i2c1_bus>;
+		status = "disabled";
+	};
+
+	i2c1_bus: i2c1-bus {
+	samsung,pins = "gpd1-2", "gpd1-3";
+	samsung,pin-function = <2>;
+	samsung,pin-pud = <3>;
+	samsung,pin-drv = <0>;
+	};
+***************************************************************************************************************/	
+
+1.设备所链接的管脚
+  工作模式确定:
+  <1>自己在驱动代码中根据gpio的reg来写对应工作模式
+  <2>gpio设备树节点的写法
+  
+2.设备是哪一个控制器控制的
+	[1]控制器寄存器
+	[2]控制器的时钟
+	[3]控制器的中断
+
+
+节点名称@reg属性的第一个地址值{
+		compatible 		  = "名字";//和驱动匹配 								 (必须)
+		reg       		  = <寄存器的起始地址  地址的长度>;
+		interrupt-parent  = <&中断控制器的标签名>;//gpio  gic
+		interrupts        = <1个或多个uint32的数字描述中断的信息>;
+		intrrupt-names    = "名称";
+		clocks            = <&clock  时钟信号的ID>;
+		clock-names       = "名字";
+		status            = "状态"
+		设备名-gpios      = <&gpio控制器的标签名  管脚编号  标志>;
+		pinctrl-0         = <&描述gpio管脚功能的标签  &描述gpio管脚功能的标签>；
+							//系统自动帮助我们设定为指定的功能模式
+		pinctrl-1         = <&描述gpio管脚功能的标签  &描述gpio管脚功能的标签>；
+		pinctrl-names     = "default","other(随便)";(第一个名字对应pinctrl-0,第二个对应pinctrl-1)
+	 自己定义的属性    = "值";
+		...
+};
+
+注意:
+属性名可以任意，但是赋值的时候需要遵从设备树的语法原则，
+通用的属性内核是自动解析的,自己的属性需要使用内核提供的函数接口自己解析
+
+   
+必须知道的知识:
+   <1>这个节点Linux内核最终会对它进行解析,解析完成之后是一个结构体:
+   		
+      struct device_node	 这个结构体中包含的就是这个节点的所有信息 (struct platform_device 它有记录)
+   <2>Linux内核在解析这个节点的时候，会根据节点的状态，判定是否添加到platform bus总线上。
+   	  如果是添加到platform bus总线上，就会构建一个platform_device结构体,并且会去匹配驱动
+   	  此时reg属性就会解析成IORESOURCE_MEM
+   	  此时interrupts属性就会解析成IORESOURCE_IRQ 
+
+练习:
+(1)描述LED2这个设备
+   led2@11000C40{
+   		 compatible = "fs4412-led";
+   		 reg        = <0x11000C40 8>;
+   		 ------------------------------------------------
+   		 pin        = <7>;
+   		 level      = <1>;
+   		 mode       = <1>;
+   		 ------------------------------------------------
+   		 status = "okay";
+   };	
+
+(2)描述KEY2这个设备(描述中断信息)
+	 key2{
+	 		 compatible = "fs4412-led";
+	 		 interrupt-parent  = <&gpx1>;
+			 interrupts        = <1 8>;
+			 intrrupt-names    = "key-interrupt";
+	 };
+
+(3)描述ADC这个设备  (reg ,interrupt , clock)
+	 adc@{
+	 		compatible = "exynos4412-adc";
+	 		reg        = <0x126C0000  0x20>;
+	 		interrupt-parent  = <&combiner>;
+			interrupts        = <10 3>;
+			intrrupt-names    = "adc-interrupt";
+			clocks            = <&clock  326>; 
+		  clock-names       = "adc-clock";
+		  status            = "okay"
+	 };

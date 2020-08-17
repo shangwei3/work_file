@@ -1,0 +1,396 @@
+一 fs4412 (SOC:samsung,exynos4412) 启动
+
+硬件信息
+ SOC   : 三星 exynos4412 (4个cortex-A9 ARM核)  主频 1.4GHZ
+ board : origen<->fs4412 
+
+u-boot版本 : u-boot-2013.01
+
+1.eynos4412内部固化的irom代码先运行
+	(1)确定启动的设备
+	(2)初始化启动的设备
+	(3)将启动设备开始一部分代码(BL1)搬移到exynos4412内部的iram(SRAM)运行
+	
+注意:BL1 代码是三星提供的，irom的代码在读取BL1的时候，会对它做验证，如果验证通过
+	 	 则运行它。
+
+
+2.在iram运行BL1代码
+	(1)确定启动设备
+	(2)将启动设备中的BL2代码拷贝到exynos4412内部的iram运行
+	
+注意:
+	BL2指的的是u_boot的第一阶段代码
+	
+-----------------------------u-boot代码开始运行----------------------------------------
+
+3.在iram运行BL2代码
+	(1)设置异常向量表，告诉ARM核异常向量表基地址
+	(2)关闭Cache和MMU
+	(3)初始化系统时钟
+	(4)初始化内存
+	(5)将整个u_boot从存储介质中搬移到内存中（board_init_f）
+	
+
+4.在内存中运行u_boot代码
+	(1)设置异常向量表，告诉ARM核异常向量表基地址
+	(2)关闭Cache和MMU
+	(3) ...
+	(4) ...
+	注意:
+	此时u_boot已经在内存中，不需要初始化系统时钟和内存
+	
+	(5)_main
+		<1>设置了sp
+		<2>调用了board_init_f
+		
+	(6)board_init_f	 (板子的第一阶段初始化)	
+		 <1>完成基本的初始化
+		 		[1]SOC ID的获取
+			  [2]定时器初始化
+			  [3]串口的初始化
+			  [4]从串口中输出了一些信息
+		 <2>为u_boot重定向做准备
+		 		在内存最顶端划分空间
+	
+	(7)重定向u_boot
+		 如果u_boot不是在高端内存，则将u_boot从低端内存搬移到高端内存
+		 
+	(8)清BSS段
+		 为运行C语言程序
+		
+	(9)board_init_r(板子的第二阶段初始化)	 	 
+		 <1>初始化硬件设备
+		 		[1]EMMC存储器
+		 		[2]DM9000网卡设备
+		 		...
+		 		
+		 <2>从存储介质中读取了环境变量的值
+		 
+	(10)main_loop
+			获取了bootdelay和bootcmd环境变量的值，如果没有设置bootcmd则进入u_boot交互界面。
+			如果设置了bootcmd,判断在到计时时间内，如果用户没有打断，则执行bootcmd命令。
+			如果倒计时时间内，被用户打断，则进入u_boot交互界面。
+			
+	注意:
+	u_boot交互界面，循环读取用户输入的命令，然后执行。			 
+		 	
+二 uboot移植核心思想  
+
+1. 厂家直接提供u-boot -> 烧写 或者 修改(增加新功能) 或 u-boot 版本升级
+2. 芯片公司,让u-boot支持公司的芯片 ,自己仿照别的厂家，添加自己开发板相关代码
+3. 芯片公司根据自己的芯片编写bootloader,仿照u-boot设计思想
+-----------------------------------------------------------------------------------
+(1)熟悉SOC芯片和u-boot启动流程
+(2)系统时钟，内存是否能正常初始化
+(3)搬移u-boot到内存过程 (从存储介质中读取数据，然后写到内存)
+(4)对存储介质(emmc)如何进行读写
+
+三  uboot移植 
+
+-----------------------------------------------------------------------------------
+在u-boot源码中找到一块和自己开发板类似板子 ,然后给予这一块开发板做移植
+(1)芯片厂家 && 芯片型号
+   samsung     exynos4412    ===> 三星母板 : smdk4412 (orgien)
+
+   在u-boot中没有找到  母板(芯片厂家做出一款芯片后，设计的第一块开发板)	
+   <1>查阅一下芯片厂家给予这个芯片是否做了其他母板
+   <2>是不是当前u-boot版本中，芯片厂家还没有将自己的母板代码添加进来 ----> 去新版本的u-boot中寻找	
+---------------------------------------------------------------------------------------------------
+
+(1)修改Makefile指定自己的交叉开发工具链前缀 
+
+ifeq (arm,$(ARCH))
+	CROSS_COMPILE ?=arm-none-linux-gnueabi-
+endif
+
+(2)在boards.cfg文件中选择和自己开发板相近的参考板进行编译
+  
+   <1>针对自己的开发板配置u-boot : make 开发板名_config
+
+	例如(fs4412 <-----> origen):
+		make origen_config    ----------> include/config.mk 
+   
+   <2>编译 
+   	  make 
+
+	生成u-boot.bin适用于origen ,移植的思想：修改origen的开发板的uboot代码 
+
+- "u-boot.bin"   is a raw binary image
+- "u-boot" 		   is an image in ELF binary format
+- "u-boot.srec"  is in Motorola S-Record format
+- "u-boot.map"   记录了生成u-boot代码所需要文件的路径 
+- "System.map"   记录了u-boot中标签名和函数名对应的地址 
+
+
+(3)将u-boot.bin下载到内存中运行
+  注意 
+  下载的地址:编译u_boot的时候指定的代码运行地址(CONFIG_SYS_TEXT_BASE)
+
+(4)运行内存中的u-boot.bin 
+   go   u_boot所在内存的地址
+
+(5)如果通过go命令启动u-boot 的时候，没有看到任何输出效果?
+   [1]u-boot在内存中运行的时候，重新初始化了系统时钟和内存?
+   [2]没有初始化串口?
+   [3]指定内存基地址不对? 
+   [4] ? (点灯大法:通过在一些位置加亮灯代码,确定导致u-boot死掉的代码) 
+   [5]TrustZone代码有问题?
+   
+   注意:
+   在u-boot-2013.01 for fs4412上面，是由于TruszZone的代码有问题，我们只需要将 
+   board/samsung/origen/lowlevel_init.S
+   文件中的bl tzpc_init代码注释掉就可以了 
+   
+三、DM9000网卡移植 
+
+通过u_boot启动输出的信息，发现没有网卡信息，通过阅读arch/arm/lib/board.c文件中的board_init_r函数，
+发现如下代码:
+
+668 #if defined(CONFIG_CMD_NET)
+669     puts("Net:   ");
+670     eth_initialize(gd->bd);
+671 #if defined(CONFIG_RESET_PHY_R)
+672     debug("Reset Ethernet PHY\n");
+673     reset_phy();
+674 #endif
+675 #endif
+通过代码分析，发现如果想使用网卡，就必须定义CONFIG_CMD_NET宏。所以，我们需要在
+include/configs/orgien.h中定义CONFIG_CMD_NET宏。
+
+重新编译u_boot代码，运行u_boot.bin程序，在串口中输出了如下信息:
+Net:   Net Initialization Skipped
+No ethernet found.
+
+通过提示信息，可以发现网卡设备没有发现。跟踪 eth_initialize函数，发现如下代码:
+      int eth_initialize(bd_t *bis)                                                                           
+292 {
+293     int num_devices = 0;
+294     eth_devices = NULL;
+295     eth_current = NULL;
+308   
+312     if (board_eth_init != __def_eth_init) {
+313         if (board_eth_init(bis) < 0)
+            printf("Board Net Initialization Failed\n");
+315     } else if (cpu_eth_init != __def_eth_init) {
+316         if (cpu_eth_init(bis) < 0)
+317             printf("CPU Net Initialization Failed\n");
+318     } else
+319         printf("Net Initialization Skipped\n");
+320 
+321     if (!eth_devices) {
+322         puts("No ethernet found.\n");
+323         bootstage_error(BOOTSTAGE_ID_NET_ETH_START);
+324     } else {
+通过代码分析发现board_eth_init 函数自己没有重新实现。
+
+问题:在哪里去实现board_eth_init函数呢?
+回答:
+	  在源码目录通过grep "board_eth_init" * -nR ,查看别人是如何实现的，然后仿照别人来实现。
+	  最终我们发现，我们应该在board/samsung/orgien/orgien.c中，定义如下函数:
+	  111 #ifdef CONFIG_CMD_NET                                                       
+    112 int board_eth_init(bd_t *bis)
+    113 {
+    114     return dm9000_initialize(bis);
+    115 }
+    116 #endif
+
+添加完代码后，我们接着编译u_boot。出现如下错误:
+board/samsung/origen/origen.c:114: undefined reference to `dm9000_initialize'
+	  
+解决问题方法:
+1.首先找到网卡驱动,然后网卡驱动代码放到uboot中编译
+  
+  通过网卡驱动所在目录的Makefile文件确定，网卡驱动代码进行编译的相关宏开关
+  ,然后在include/configs/origen.h中定义相关的宏: #define CONFIG_DRIVER_DM9000
+  
+  接着编译u_boot,发现如下错误:
+  
+  dm9000x.c: In function 'dm9000_outblk_8bit':
+  dm9000x.c:156:3: error: 'DM9000_DATA' undeclared (first use in this function)
+	...
+	dm9000x.c: In function 'dm9000_rx_status_16bit':
+  dm9000x.c:213:2: error: 'DM9000_IO' undeclared (first use in this function)
+  
+  通过grep "DM9000_DATA" * -nR ,发现别人是如下添加
+  72 #define CONFIG_DRIVER_DM9000
+  73 #define CONFIG_DRIVER_DM9000_NO_EEPROM
+  74 #define CONFIG_DM9000_BASE              0x20000300
+  75 #define DM9000_IO       CONFIG_DM9000_BASE
+  76 #define DM9000_DATA     (CONFIG_DM9000_BASE+4)
+  此时需要注意，我们不能直接将这个宏定义直接拷贝过去，需要根据自己开发板接的DM9000网卡情况，来更改
+  宏的值。
+  我们的开发板上DM9000的CS->CS1 , CMD->ADDR2 ,根据此信息，我们知道DM9000对应的地址是BANK1,通过
+  exynos4412芯片手册,我们确定BANK1开始地址 0x500,0000。
+  我们通过阅读DM9000芯片手册，我们知道DM000通过CMD这一根线来确定，我们给他发送的数据是寄存器地址
+  还是寄存器数据。
+  CMD = 0  解析数据的是它内部寄存器地址
+  CMD = 1  解析数据的是它内部寄存器值
+  
+  
+  通过这些信息，我们可以确定应该在include/configs/origen.h中定义如下宏:
+  #define CONFIG_DM9000_BASE              0x5000000
+  #define DM9000_IO         CONFIG_DM9000_BASE
+  #define DM9000_DATA     (CONFIG_DM9000_BASE+4)
+  
+  添加完之后，编译代码，然后运行u_boot.bin。发现串口中已经提示了DM9000网卡信息，但是
+  此时在u_boot中使用ping命令的时候，提示如下错误:
+  ORIGEN # ping 192.168.0.103
+  Unknown command 'ping' - try 'help'
+  
+  此错误告诉我们，没有ping命令。通过在common目录下搜索ping,我们发现如下代码:
+  276 #if defined(CONFIG_CMD_PING)
+  277 static int do_ping(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+  278 {
+  279     if (argc < 2)
+  280         return -1;
+  281                                                                                                         
+  282     NetPingIP = string_to_ip(argv[1]);
+  283     if (NetPingIP == 0)
+  284         return CMD_RET_USAGE;
+  285 
+  通过阅读代码，我们知道，我们应该在include/configs/origen.h定义宏CONFIG_CMD_PING。
+  添加完后，接着编译代码，然后运行u_boot.bin。此时使用ping命令出现如下错误:
+  
+  第一个错误:
+  ORIGEN # ping 192.168.0.103
+  dm9000 i/o: 0x5000000, id: 0x90000a46
+  DM9000: running in 16 bit mode
+  MAC: 00:00:00:00:00:00
+  operating at 100M full duplex mode
+  *** ERROR: `ipaddr' not set
+
+  解决方法:
+  setenv ipaddr 192.168.0.3(板子ip地址)
+  
+  第二个错误:
+  ORIGEN # ping 192.168.0.103
+  dm9000 i/o: 0x5000000, id: 0x90000a46
+  DM9000: running in 16 bit mode
+  MAC: 00:00:00:00:00:00
+  operating at 100M full duplex mode
+  *** ERROR: `ethaddr' not set
+	 
+	解决方法:
+	setenv ethaddr 00:0c:29:23:ec:b6 (网卡物理地址)
+	
+	第三个错误:
+	ORIGEN # tftp 40000000 uImage
+  dm9000 i/o: 0x5000000, id: 0x90000a46
+  DM9000: running in 16 bit mode
+  MAC: 00:0c:29:23:ec:b6
+  operating at 100M full duplex mode
+  *** ERROR: `serverip' not set
+  
+  解决方法:
+  setenv serverip  192.168.0.103 (ubuntu主机的ip地址)
+
+	
+---------------------------------------------------------------------------------------
+	对于驱动一个硬件设备的时候，需要做的事情:
+	(1)了解硬件设备的背景知识 (网上查资料或datasheet)
+		 硬件功能，特性，参数
+		  
+	(2)阅读硬件原理图
+		 硬件接了那些CPU管脚
+		  
+	(3)从SOC芯片手册中，找到控制管脚的GPIO控制器
+	
+	(4)从SOC芯片手册中，找到控制设备的控制器
+		 
+	(5)有些设备对他进行控制的时候，是通过操作它内部的寄存器完成控制
+		  此时，我们阅读datasheet，查看如何从操作芯片内部的寄存器
+		      
+		      		        
+3.添加网卡管脚初始化和控制器初始化代码
+	
+	需要在include/configs/origen.h文件添加如下代码
+	#define CONFIG_ENV_SROM_BANK        1
+	 
+	 
+  需要在board/samsung/origen/origen.c添加如下代码
+  #include <asm/arch/sromc.h>
+  
+	static void dm9000_pre_init(void)
+	{
+		int i;
+		u32 smc_bw_conf, smc_bc_conf;
+	
+		/* gpio configuration GPY0CON */
+		s5p_gpio_cfg_pin(&gpio2->y0, CONFIG_ENV_SROM_BANK, GPIO_FUNC(2));//CS1
+		s5p_gpio_cfg_pin(&gpio2->y0,4, GPIO_FUNC(2));//WEn
+		s5p_gpio_cfg_pin(&gpio2->y0,5, GPIO_FUNC(2));//OEn
+	
+		/* gpio configuration GPY1CON */
+		s5p_gpio_cfg_pin(&gpio2->y1,0, GPIO_FUNC(2));
+		s5p_gpio_cfg_pin(&gpio2->y1,1, GPIO_FUNC(2));
+		s5p_gpio_cfg_pin(&gpio2->y1,2, GPIO_FUNC(2));
+		s5p_gpio_cfg_pin(&gpio2->y1,3, GPIO_FUNC(2));
+		
+		/*data and addr bus*/
+		for(i = 0;i < 8;i ++){
+			s5p_gpio_cfg_pin(&gpio2->y3,i, GPIO_FUNC(2));//
+			s5p_gpio_cfg_pin(&gpio2->y4,i, GPIO_FUNC(2));//
+			s5p_gpio_cfg_pin(&gpio2->y5,i, GPIO_FUNC(2));//
+			s5p_gpio_cfg_pin(&gpio2->y6,i, GPIO_FUNC(2));//
+		}
+	
+		/* Ethernet needs bus width of 16 bits */
+		smc_bw_conf = SROMC_DATA16_WIDTH(CONFIG_ENV_SROM_BANK) |  SROMC_BYTE_ADDR_MODE(CONFIG_ENV_SROM_BANK); 
+		
+		smc_bc_conf = SROMC_BC_TACS(0x0F) | SROMC_BC_TCOS(0x0F)
+				| SROMC_BC_TACC(0x0F) | SROMC_BC_TCOH(0x0F)
+				| SROMC_BC_TAH(0x0F)  | SROMC_BC_TACP(0x0F)
+				| SROMC_BC_PMC(0x0F);
+	
+		/* Select and configure the SROMC bank */
+		s5p_config_sromc(CONFIG_ENV_SROM_BANK, smc_bw_conf, smc_bc_conf);
+	}  
+	
+	
+ int board_eth_init(bd_t *bis)
+ {
+ 	  dm9000_pre_init();//初始化DM9000对应的GPIO管脚和SROM控制器
+    return dm9000_initialize(bis);//调用DM9000网卡驱动函数
+ }
+	  
+四、通过SD卡烧写uboot到EMMC  
+  (1)编译uboot源码得到u-boot.bin
+  (2)将u-boot.bin拷贝到mkfs4412目录下
+  (3)运行mk.sh生成u-boot-fs4412.bin(这个uboot中包含了三星提供代码)
+  (4)将u-boot-fs4412.bin文件拷贝到SD卡里面sdupdate目录下
+  (5)拨动拨码开关，从SD卡启动
+  (6)输入如下命令:
+  	 sdfuse flash bootloader u-boot-fs4412.bin   烧写SD卡中存放的u-boot到EMMC存储器
+  (7)拨动拨码开关，从EMMC卡启动	 
+
+  	 
+五、从EMMC启动的时候，会发现没有任何效果
+  (1)没有给uart设备提供时钟信号,需要在
+		board/samsung/origen/lowlevel_init.S 中uart_asm_init中添加如下代码
+		ldr r0, =0x10030000 @基地址
+		ldr r1, =0x666666   @值
+		ldr r2, =0xC250     @偏移量  
+		str r1, [r0, r2]
+	
+		ldr r1, =0x777777  @值
+		ldr r2, =0xC550    @偏移量
+		str r1, [r0, r2]
+ 
+  (2)关闭电源功能
+	  board/samsung/origen/lowlevel_init.S中lowlevel_init中添加
+	  
+	  /*PS-Hold high*/
+	  ldr r0, =0x1002330c
+	  ldr r1, [r0]
+	  orr r1, r1, #0x300
+	  str r1, [r0]
+	  ldr r0, =0x11000c08
+	  ldr r1, =0x0
+	  str r1, [r0]
+
+六、在uboot添加emmc代码
+	参照实验手册，四、FLASH 移植 （EMMC）
+	
+	注意:
+	在头文件中不能出现"//"注释

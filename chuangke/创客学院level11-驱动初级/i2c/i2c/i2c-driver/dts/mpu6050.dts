@@ -1,0 +1,18 @@
+/*一定要在根节点外面写 : &i2c_5引用i2c_5这个标签表示的节点*/
+&i2c_5{
+	status = "okay";
+	samsung,i2c-sda-delay = <100>;
+	samsung,i2c-max-bus-freq = <20000>;
+	pinctrl-0 = <&i2c5_bus>;
+	pinctrl-names = "default";
+	
+	/*
+	 *最终我们可以在/sys/bus/i2c/device/i2c_5目录下看到我们的从设备
+	 *从设备的名字为:5-068
+	 *
+	 */
+	mpu6050@68{
+		compatible = "fs4412,mpu6050";
+		reg        = <0x68>;
+	};
+};

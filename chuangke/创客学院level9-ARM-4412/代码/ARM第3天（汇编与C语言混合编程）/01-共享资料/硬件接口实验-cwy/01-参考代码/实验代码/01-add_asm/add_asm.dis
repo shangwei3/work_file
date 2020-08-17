@@ -1,0 +1,91 @@
+
+add_asm.elf:     file format elf32-littlearm
+
+
+Disassembly of section .text:
+
+00034000 <_start>:
+   34000:	e3a00009 	mov	r0, #9
+   34004:	e3a0100f 	mov	r1, #15
+   34008:	e0811000 	add	r1, r1, r0
+
+0003400c <stop>:
+   3400c:	eafffffe 	b	3400c <stop>
+
+Disassembly of section .debug_aranges:
+
+00000000 <.debug_aranges>:
+   0:	0000001c 	andeq	r0, r0, ip, lsl r0
+   4:	00000002 	andeq	r0, r0, r2
+   8:	00040000 	andeq	r0, r4, r0
+   c:	00000000 	andeq	r0, r0, r0
+  10:	00034000 	andeq	r4, r3, r0
+  14:	00000010 	andeq	r0, r0, r0, lsl r0
+	...
+
+Disassembly of section .debug_info:
+
+00000000 <.debug_info>:
+   0:	00000051 	andeq	r0, r0, r1, asr r0
+   4:	00000002 	andeq	r0, r0, r2
+   8:	01040000 	mrseq	r0, (UNDEF: 4)
+   c:	00000000 	andeq	r0, r0, r0
+  10:	00034000 	andeq	r4, r3, r0
+  14:	00034010 	andeq	r4, r3, r0, lsl r0
+  18:	5f646461 	svcpl	0x00646461
+  1c:	2e6d7361 	cdpcs	3, 6, cr7, cr13, cr1, {3}
+  20:	3a440073 	bcc	11001f4 <_stack+0x10801f4>
+  24:	6c63655c 	cfstr64vs	mvdx6, [r3], #-368	; 0xfffffe90
+  28:	65737069 	ldrbvs	r7, [r3, #-105]!	; 0x69
+  2c:	6f72705f 	svcvs	0x0072705f
+  30:	7463656a 	strbtvc	r6, [r3], #-1386	; 0x56a
+  34:	53465c73 	movtpl	r5, #27763	; 0x6c73
+  38:	5c303132 	ldfpls	f3, [r0], #-200	; 0xffffff38
+  3c:	612d3130 	teqvs	sp, r0, lsr r1
+  40:	615f6464 	cmpvs	pc, r4, ror #8
+  44:	47006d73 	smlsdxmi	r0, r3, sp, r6
+  48:	4120554e 	teqmi	r0, lr, asr #10
+  4c:	2e322053 	mrccs	0, 1, r2, cr2, cr3, {2}
+  50:	01003132 	tsteq	r0, r2, lsr r1
+  54:	Address 0x00000054 is out of bounds.
+
+
+Disassembly of section .debug_abbrev:
+
+00000000 <.debug_abbrev>:
+   0:	10001101 	andne	r1, r0, r1, lsl #2
+   4:	12011106 	andne	r1, r1, #-2147483647	; 0x80000001
+   8:	1b080301 	blne	200c14 <_stack+0x180c14>
+   c:	13082508 	movwne	r2, #34056	; 0x8508
+  10:	00000005 	andeq	r0, r0, r5
+
+Disassembly of section .debug_line:
+
+00000000 <.debug_line>:
+   0:	00000036 	andeq	r0, r0, r6, lsr r0
+   4:	00200002 	eoreq	r0, r0, r2
+   8:	01020000 	mrseq	r0, (UNDEF: 2)
+   c:	000d0efb 	strdeq	r0, [sp], -fp
+  10:	01010101 	tsteq	r1, r1, lsl #2
+  14:	01000000 	mrseq	r0, (UNDEF: 0)
+  18:	00010000 	andeq	r0, r1, r0
+  1c:	5f646461 	svcpl	0x00646461
+  20:	2e6d7361 	cdpcs	3, 6, cr7, cr13, cr1, {3}
+  24:	00000073 	andeq	r0, r0, r3, ror r0
+  28:	05000000 	streq	r0, [r0]
+  2c:	03400002 	movteq	r0, #2
+  30:	2f2f1500 	svccs	0x002f1500
+  34:	00020230 	andeq	r0, r2, r0, lsr r2
+  38:	Address 0x00000038 is out of bounds.
+
+
+Disassembly of section .ARM.attributes:
+
+00000000 <_stack-0x80000>:
+   0:	00001541 	andeq	r1, r0, r1, asr #10
+   4:	61656100 	cmnvs	r5, r0, lsl #2
+   8:	01006962 	tsteq	r0, r2, ror #18
+   c:	0000000b 	andeq	r0, r0, fp
+  10:	01080106 	tsteq	r8, r6, lsl #2
+  14:	Address 0x00000014 is out of bounds.
+

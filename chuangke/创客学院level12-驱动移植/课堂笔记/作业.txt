@@ -1,0 +1,84 @@
+晚间练习: LED驱动编写
+
+GPX2CON    Address = 0x11000C40 
+GPX23DAT   Address = 0x11000C44 
+
+手册上查询的地址是实际物理地址，操作系统使用虚拟地址,所以我们需要将物理地址做个映射.
+
+#include <asm/io.h>
+
+void * ioremap(unsigned long phy_addr,int size)
+功能:将物理地址与虚拟地址映射
+参数:
+@phy_addr 物理地址  
+@size     映射大小
+返回:
+返回映射后的虚拟地址
+
+static inline u32  readl(const volatile void  __iomem *addr)
+{
+	return  *(const volatile u32 __force *) addr;
+}
+功能:从一个地址中读取四个字节
+
+
+static inline void  writel(u32 b, volatile void __iomem *addr)
+{
+	*(volatile u32 __force *) addr = b;
+}
+ 
+功能:向一个地址中写四个字节
+
+
+例如:将GPX2CON寄存器设置IO工作模式为输出模式
+
+int reg;
+void *con = ioremap(0x11000C40,4);
+
+
+//读值
+reg = real(con);
+//修改
+reg &= ~(0xf << 28);
+reg |=  (0x1 << 28);
+//写值
+writel(reg,con);
+
+-----------------------------------------------------------------------------------------
+1.
+struct led_devie
+{
+	void *con;//保存映射后的地址
+	void *data;//保存映射后的地址
+	int major_num;//保存主设备号
+	struct cdev cdev;
+	struct class *cls;
+	struct device *device;
+};
+
+2.实现 file_opertaions 
+
+xxx_open,xxx_ioctl,xxx_release 
+
+3.模块入口函数干的事情
+ [1]kmalloc/kzalloc分配空间
+ [2]初始化字符设备
+ [3]申请设备号
+ [4]添加字符设备到系统
+ [5]创建一个class
+ [6]创建一个device 
+ [7]映射GPG3CON和GPG3DAT地址,映射后保存在con和data
+ 
+4.xxx_open干的事情
+  [1]设置GPIO为输出模式
+  [2]关闭所有的LED灯(清GPG3DAT)
+   
+5.xxx_ioctl干的事情
+	CMD_LED_ON :打开所有灯
+	CMD_LED_OFF:关闭所有灯
+	
+6.模块出口函数
+	释放分配的资源(内存，映射地址，设备号....)
+	
+注意:
+此时KERNEL_BUILD是开发板Linux内核源码树的路径

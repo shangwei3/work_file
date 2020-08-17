@@ -1,0 +1,3 @@
+Dependencies for Project 'led', Target 'led': (DO NOT MODIFY !)
+F (.\led.s)(0x581B2A8A)(-mcpu=arm920t -gdwarf-2 -mthumb-interwork --MD led.d -ID:\software\keil_MDK\ARM\INC\Samsung\ -alhms="led.lst" -o led.o)
+F (.\main.c)(0x581B31CF)(-c -mcpu=arm920t -gdwarf-2 -MD -Wall -O -mapcs-frame -mthumb-interwork -ID:\software\keil_MDK\ARM\INC\Samsung\ -Wa,-alhms="main.lst" -o main.o)
