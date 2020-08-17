@@ -1,2 +1,0 @@
-Dependencies for Project 'test', Target 'test': (DO NOT MODIFY !)
-F (.\test.s)(0x58FDCAE2)(--gdwarf-2 -mthumb-interwork -IC:/Keil_v5/ARM/CMSIS/Include -IC:/Keil_v5/ARM/Inc/Samsung -I"C:/Program Files (x86)/yagarto/arm-none-eabi/include" -I"C:/Program Files (x86)/yagarto/lib/gcc/arm-none-eabi/4.6.2/include" -I"C:/Program Files (x86)/yagarto/arm-none-eabi/include/c++/4.6.2" -I"C:/Program Files (x86)/yagarto/arm-none-eabi/include/c++/4.6.2/arm-none-eabi" --defsym __UVISION_VERSION=520 --defsym __GCC=1 --defsym __GCC_VERSION=462--MD ./objects/test.d -o ./objects/test.o)

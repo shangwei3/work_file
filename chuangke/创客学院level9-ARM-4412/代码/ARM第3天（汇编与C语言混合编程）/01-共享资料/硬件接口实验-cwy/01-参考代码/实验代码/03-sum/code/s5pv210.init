@@ -1,4 +1,0 @@
-target remote 127.0.0.1:3333
-monitor halt
-monitor arm mcr 15 0 1 0 0 0
-monitor step 0

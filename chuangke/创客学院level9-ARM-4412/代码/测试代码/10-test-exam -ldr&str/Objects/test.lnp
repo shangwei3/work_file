@@ -1,1 +1,0 @@
--mthumb-interwork -o "./Objects/test.elf" "./objects/test.o" -nostartfiles -lm

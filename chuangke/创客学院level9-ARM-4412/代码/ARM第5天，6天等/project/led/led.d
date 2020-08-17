@@ -1,1 +1,0 @@
-led.o: led.s

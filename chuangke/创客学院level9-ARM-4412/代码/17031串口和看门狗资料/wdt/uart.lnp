@@ -1,1 +1,0 @@
--mthumb-interwork -Wl -o uart.elf "uart.o" "main.o" -nostartfiles -lm

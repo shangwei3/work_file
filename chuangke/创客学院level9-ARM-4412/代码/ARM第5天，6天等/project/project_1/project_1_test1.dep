@@ -1,2 +1,0 @@
-Dependencies for Project 'project_1', Target 'test1': (DO NOT MODIFY !)
-F (.\test2.s)(0x57C4E294)(-mcpu=arm920t -gdwarf-2 -mthumb-interwork --MD test2.d -ID:\software\keil_MDK\ARM\INC\Samsung\ -alhms="test2.lst" -o test2.o)

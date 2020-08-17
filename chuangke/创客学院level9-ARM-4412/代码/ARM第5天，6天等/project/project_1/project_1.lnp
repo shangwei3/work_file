@@ -1,1 +1,0 @@
--mthumb-interwork -Wl,-Ttext=0x00000000 -o project_1.elf "test2.o" -nostartfiles -lm

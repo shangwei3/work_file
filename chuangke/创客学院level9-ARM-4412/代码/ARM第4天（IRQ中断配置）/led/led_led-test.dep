@@ -1,4 +1,0 @@
-Dependencies for Project 'led', Target 'led-test': (DO NOT MODIFY !)
-F (.\main.c)(0x57C59D55)(-c -mcpu=arm920t -gdwarf-2 -MD -Wall -O -mapcs-frame -mthumb-interwork -IE:\Keil_v5\ARM\INC\Samsung\ -Wa,-alhms="main.lst" -o main.o)
-F (.\start.S)(0x57A018D6)(-mcpu=arm920t -gdwarf-2 -mthumb-interwork --MD start.d -IE:\Keil_v5\ARM\INC\Samsung\ -alhms="start.lst" -o start.o)
-F (.\Makefile)(0x57A05173)()

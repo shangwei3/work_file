@@ -1,1 +1,0 @@
--mthumb-interwork -o "./Objects/led.elf" "./objects/led.o" "./objects/main.o" -nostartfiles -lm

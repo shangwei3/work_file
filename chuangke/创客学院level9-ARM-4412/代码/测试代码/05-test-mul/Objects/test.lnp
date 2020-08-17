@@ -1,1 +1,0 @@
--mthumb-interwork -Wl,-Map="./Listings/test.map" -o "./Objects/test.elf" "./objects/test.o" -nostartfiles -lm

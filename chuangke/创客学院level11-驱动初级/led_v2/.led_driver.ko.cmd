@@ -1,1 +1,0 @@
-cmd_/mnt/hgfs/ubuntuShell/learn-driver/led_driver/led_v2/led_driver.ko := ld -r -m elf_i386 -T /usr/src/linux-headers-3.2.0-29-generic-pae/scripts/module-common.lds --build-id  -o /mnt/hgfs/ubuntuShell/learn-driver/led_driver/led_v2/led_driver.ko /mnt/hgfs/ubuntuShell/learn-driver/led_driver/led_v2/led_driver.o /mnt/hgfs/ubuntuShell/learn-driver/led_driver/led_v2/led_driver.mod.o

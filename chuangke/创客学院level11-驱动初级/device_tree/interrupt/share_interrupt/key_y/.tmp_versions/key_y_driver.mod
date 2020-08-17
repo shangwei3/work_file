@@ -1,2 +1,0 @@
-/mnt/hgfs/ubuntu-share/learn-driver/interrupt/share_interrupt/key_y/key_y_driver.ko
-/mnt/hgfs/ubuntu-share/learn-driver/interrupt/share_interrupt/key_y/key_y_driver.o

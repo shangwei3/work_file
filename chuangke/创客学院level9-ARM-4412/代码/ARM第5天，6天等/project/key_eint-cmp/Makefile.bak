@@ -1,6 +1,0 @@
-all:led.S
-	arm-none-eabi-gcc -g -c -O0 led.S -o led.o
-	arm-none-eabi-ld led.o  -Ttext 0x40008000 -o start.elf
-	arm-none-eabi-objcopy -O0 binary start.elf led_on.bin
-clean:
-	rm *.elf *.o

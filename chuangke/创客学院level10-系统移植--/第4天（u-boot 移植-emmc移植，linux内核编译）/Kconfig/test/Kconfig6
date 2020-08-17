@@ -1,4 +1,0 @@
-comment "drivers/test/Kconfig1"
-
-source "drivers/test/Kconfig1"
-
